@@ -1,0 +1,43 @@
+{# templates/category_overview.html #}
+{% extends 'base.html' %}
+
+{% block title %} {{ category_data.display_name }} - Sua Empresa de Construção e Terceirização{% endblock %} {# Atualizado para category_data.display_name #}
+
+{% block content %}
+<div class="container page-container"> {# Adicionado page-container para consistência de padding #}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Início</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('services_overview') }}">Nossos Serviços</a></li> {# Link para a página geral de serviços #}
+            <li class="breadcrumb-item active" aria-current="page">{{ category_data.display_name }}</li> {# Atualizado para category_data.display_name #}
+        </ol>
+    </nav>
+
+    <h1 class="section-title">{{ category_data.display_name }}</h1> {# Usando section-title para consistência de estilo #}
+
+    <div class="card p-4 shadow-sm mb-8"> {# Adicionado mb-8 para margem inferior #}
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Explore nossa categoria de {{ category_data.display_name }}</h2> {# Título mais específico #}
+        <p class="text-gray-700 mb-6">Aqui você encontra uma vasta gama de soluções e projetos que oferecemos dentro desta área da construção. Navegue pelos nossos serviços específicos para encontrar informações detalhadas e exemplos de trabalhos realizados.</p>
+        
+        <h3 class="text-xl font-semibold text-gray-800 mb-3">Serviços em {{ category_data.display_name }}:</h3> {# Título para a lista de serviços #}
+        <ul class="list-group list-group-flush">
+            {% for service_item in services_in_category %} {# Loop sobre services_in_category #}
+            <li class="list-group-item py-3 px-0 border-b border-gray-200 last:border-b-0"> {# Estilos Tailwind para a lista #}
+                <a href="{{ url_for('service_detail_page', service_category_slug=category_key, service_slug=service_item.key) }}" class="block text-blue-600 hover:text-blue-800 hover:underline text-lg"> {# Link atualizado #}
+                    <i class="fas fa-angle-right mr-2 text-gray-500"></i> {{ service_item.title }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    {# Você pode adicionar mais seções aqui, como projetos em destaque da categoria, etc. #}
+    <section class="call-to-action mt-8"> {# Adicionado margem superior #}
+        <div class="cta-content">
+            <h2>Precisa de um Orçamento para sua Obra?</h2>
+            <p>Entre em contato conosco e solicite uma proposta personalizada para os serviços que você busca.</p>
+            <a href="{{ url_for('contact') }}" class="btn cta-btn">Solicitar Orçamento</a>
+        </div>
+    </section>
+</div>
+{% endblock %}

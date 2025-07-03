@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="portfolio-intro py-16 bg-gradient-to-r from-blue-700 to-blue-900 text-white text-center rounded-lg mx-auto max-w-6xl shadow-lg">
+    <div class="container mx-auto px-4">
+        <h1 class="text-4xl md:text-5xl font-extrabold mb-4">Nossos Projetos de Sucesso</h1>
+        <p class="text-lg md:text-xl mb-8">
+            Confira a qualidade e a versatilidade dos nossos serviços através de projetos já concluídos.
+        </p>
+    </div>
+</section>
+
+<section class="portfolio-grid py-16 bg-white rounded-lg mx-auto max-w-6xl mt-8 shadow-lg">
+    <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-bold text-blue-800 text-center mb-10">Projetos Realizados</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Projeto 1 -->
+            <div class="portfolio-card bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <img src="https://placehold.co/600x400/ADD8E6/000000?text=Projeto+Residencial" alt="Projeto Residencial" class="w-full h-48 object-cover">
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold text-blue-700 mb-2">Construção Residencial - [Cidade/Bairro]</h3>
+                    <p class="text-gray-600 text-sm mb-4">
+                        Terceirização completa de pedreiros, eletricistas e pintores para uma residência unifamiliar.
+                    </p>
+                    <a href="#" class="text-orange-500 hover:text-orange-600 font-semibold transition-colors duration-300">Ver Detalhes &rarr;</a>
+                </div>
+            </div>
+            <!-- Projeto 2 -->
+            <div class="portfolio-card bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <img src="https://placehold.co/600x400/ADD8E6/000000?text=Reforma+Comercial" alt="Reforma Comercial" class="w-full h-48 object-cover">
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold text-blue-700 mb-2">Reforma de Escritório - [Nome da Empresa]</h3>
+                    <p class="text-gray-600 text-sm mb-4">
+                        Serviços de gesso, elétrica e pintura para modernização de espaço comercial.
+                    </p>
+                    <a href="#" class="text-orange-500 hover:text-orange-600 font-semibold transition-colors duration-300">Ver Detalhes &rarr;</a>
+                </div>
+            </div>
+            <!-- Projeto 3 -->
+            <div class="portfolio-card bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <img src="https://placehold.co/600x400/ADD8E6/000000?text=Instalacao+Hidraulica" alt="Instalação Hidráulica" class="w-full h-48 object-cover">
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold text-blue-700 mb-2">Instalação Hidráulica Predial - [Condomínio]</h3>
+                    <p class="text-gray-600 text-sm mb-4">
+                        Equipe de encanadores para instalação completa de sistema hidráulico em novo edifício.
+                    </p>
+                    <a href="#" class="text-orange-500 hover:text-orange-600 font-semibold transition-colors duration-300">Ver Detalhes &rarr;</a>
+                </div>
+            </div>
+            <!-- Adicione mais projetos aqui. Use placehold.co para imagens temporárias. -->
+            <div class="portfolio-card bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <img src="https://placehold.co/600x400/ADD8E6/000000?text=Estrutura+Armacao" alt="Estrutura Armação" class="w-full h-48 object-cover">
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold text-blue-700 mb-2">Reforço Estrutural - [Galpão Industrial]</h3>
+                    <p class="text-gray-600 text-sm mb-4">
+                        Serviços de armação para reforço de estrutura em galpão industrial.
+                    </p>
+                    <a href="#" class="text-orange-500 hover:text-orange-600 font-semibold transition-colors duration-300">Ver Detalhes &rarr;</a>
+                </div>
+            </div>
+            <div class="portfolio-card bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <img src="https://placehold.co/600x400/ADD8E6/000000?text=Pintura+Externa" alt="Pintura Externa" class="w-full h-48 object-cover">
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold text-blue-700 mb-2">Pintura Externa - [Edifício Comercial]</h3>
+                    <p class="text-gray-600 text-sm mb-4">
+                        Pintura completa da fachada de um edifício comercial de grande porte.
+                    </p>
+                    <a href="#" class="text-orange-500 hover:text-orange-600 font-semibold transition-colors duration-300">Ver Detalhes &rarr;</a>
+                </div>
+            </div>
+            <div class="portfolio-card bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <img src="https://placehold.co/600x400/ADD8E6/000000?text=Nova+Construcao" alt="Nova Construção" class="w-full h-48 object-cover">
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold text-blue-700 mb-2">Nova Construção - [Condomínio Residencial]</h3>
+                    <p class="text-gray-600 text-sm mb-4">
+                        Colaboração em diversas fases da construção de um novo condomínio.
+                    </p>
+                    <a href="#" class="text-orange-500 hover:text-orange-600 font-semibold transition-colors duration-300">Ver Detalhes &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

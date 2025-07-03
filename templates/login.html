@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Sua Empresa de Construção e Terceirização{% endblock %} {# Título atualizado #}
+
+{% block content %}
+    <section class="page-header">
+        <h1>Acesse sua Conta</h1>
+        <p>Entre com seus dados ou cadastre-se para gerenciar seus projetos e solicitações.</p> {# Subtítulo atualizado #}
+    </section>
+
+    <section class="content-section login-section">
+        <div class="login-container">
+            <h2>Acesso do Cliente/Parceiro</h2> {# Título do formulário atualizado #}
+            <form action="{{ url_for('login') }}" method="POST" class="login-form">
+                <div class="form-group">
+                    <label for="email">E-mail:</label>
+                    <input type="email" id="email" name="email" required placeholder="seu.email@exemplo.com">
+                </div>
+                <div class="form-group">
+                    <label for="password">Senha:</label>
+                    <input type="password" id="password" name="password" required placeholder="**********">
+                </div>
+                <button type="submit" class="btn">Entrar</button>
+            </form>
+            <div class="login-options">
+                <p><a href="#">Esqueceu sua senha?</a></p>
+                <p>Não tem conta? <a href="{{ url_for('register') }}">Cadastre-se aqui</a></p>
+            </div>
+        </div>
+    </section>
+{% endblock %}

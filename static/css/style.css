@@ -1,0 +1,383 @@
+/* style.css (Arquivo CSS Principal) */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Montserrat:wght@600;700;800&display=swap');
+
+/* --- Variáveis CSS Globais --- */
+:root {
+    /* Cores ajustadas para o tema de construção */
+    --primary-blue-dark: #1A3B57; /* Azul escuro principal */
+    --primary-blue-medium: #2A6099; /* Azul médio para links e destaques */
+    --primary-blue-light: #5A8FC2; /* Azul claro */
+    --primary-blue-lighter: #EBF2F7; /* Azul muito claro para fundos */
+    --primary-blue-border: #A7C7E7; /* Azul para bordas */
+
+    --accent-orange: #FF8C00; /* Laranja vibrante para botões e CTAs */
+    --accent-orange-dark: #CC7000; /* Laranja mais escuro para hover */
+    --text-dark: #333;
+    --text-medium: #444;
+    --text-light-gray: #555;
+    --text-white: #ffffff;
+    --background-white: #ffffff;
+    --background-light: #f8fcf8;
+    --background-light-grey: #f9f9f9;
+    --background-dark-grey: #212121; /* Mantido para o rodapé */
+    --border-light: #eee;
+    --border-medium: #ccc;
+    --border-focus: var(--primary-blue-medium); /* Cor de foco ajustada */
+
+    /* Fontes */
+    --font-family-body: 'Roboto', sans-serif;
+    --font-family-heading: 'Montserrat', sans-serif;
+    
+    /* Tamanhos e Espaçamentos (simplificado para consistência) */
+    --spacing-xs: 4px; --spacing-sm: 8px; --spacing-md: 12px;
+    --spacing-lg: 16px; --spacing-xl: 24px; --spacing-xxl: 32px;
+    --spacing-3xl: 48px; --spacing-4xl: 64px;
+
+    /* Transições e Sombras */
+    --transition-speed-fast: 0.2s; --transition-speed-normal: 0.3s; --transition-ease: ease-in-out;
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.08); --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* --- Reset e Estilos Base --- */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: var(--font-family-body);
+    line-height: 1.6;
+    color: var(--text-dark);
+    background-color: var(--background-light);
+    overflow-x: hidden;
+}
+a { color: var(--primary-blue-medium); text-decoration: none; } /* Cor ajustada */
+a:hover { color: var(--primary-blue-dark); } /* Cor ajustada */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 var(--spacing-lg); }
+
+/* --- Layout Principal: Cabeçalho --- */
+.main-header-new { box-shadow: var(--shadow-sm); background-color: var(--background-white); position: relative; z-index: 100; }
+.top-bar { background-color: var(--primary-blue-dark); color: var(--text-white); font-size: 0.85rem; padding: var(--spacing-sm) 0; text-align: center; } /* Cor ajustada */
+.coupon-code { font-weight: 700; color: var(--accent-orange); } /* Cor ajustada (mantido o nome da classe, mas o uso foi removido no HTML) */
+
+.main-nav-bar { background-color: var(--primary-blue-medium); padding: var(--spacing-md) 0; } /* Cor ajustada */
+.main-nav-content { display: flex; justify-content: space-between; align-items: center; }
+
+.logo-new { text-decoration: none; color: var(--text-white); text-align: center; }
+.logo-text { font-family: var(--font-family-heading); font-size: 1.8rem; font-weight: 800; display: block; line-height: 1; }
+.logo-subtitle { font-size: 0.7rem; font-weight: 400; display: block; opacity: 0.8; }
+
+.sidebar-toggle-btn, .action-item {
+    color: var(--text-white);
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-sm);
+    border-radius: 4px;
+    transition: background-color var(--transition-speed-fast);
+}
+.sidebar-toggle-btn:hover, .action-item:hover { background-color: var(--primary-blue-dark); } /* Cor ajustada */
+.sidebar-toggle-btn i, .action-item i { font-size: 1.5rem; }
+
+.user-actions { display: flex; align-items: center; gap: var(--spacing-md); }
+.action-item span { font-size: 0.7rem; margin-left: var(--spacing-sm); }
+.action-item.cart { position: relative; } /* Mantido para compatibilidade, mas o uso foi removido no HTML */
+.cart-count { 
+    background-color: var(--accent-orange); color: var(--text-white); /* Cor ajustada */
+    font-size: 0.7rem; font-weight: 700; border-radius: 50%;
+    padding: 2px 6px; position: absolute; top: 0; right: 0;
+}
+
+.search-bar { 
+    display: flex; flex-grow: 1; max-width: 500px;
+    position: relative; /* Adicionado para posicionar as sugestões */
+}
+.search-bar input { 
+    padding: var(--spacing-md) var(--spacing-lg); 
+    width: 100%; /* Garante que o input ocupe o espaço disponível */
+    border-radius: 50px; /* Bordas arredondadas */
+    border: 1px solid var(--border-medium);
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+.search-bar input:focus {
+    border-color: var(--primary-blue-medium);
+}
+.search-bar button { 
+    padding: 0 var(--spacing-lg); 
+    background: none;
+    border: none;
+    color: var(--text-dark);
+    cursor: pointer;
+    position: absolute; /* Posiciona o ícone dentro do input */
+    right: var(--spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* --- Estilos para o contêiner de sugestões de pesquisa --- */
+.search-suggestions {
+    position: absolute;
+    top: calc(100% + 5px); /* Posiciona abaixo do input com um pequeno espaçamento */
+    left: 0;
+    right: 0;
+    background-color: var(--background-white);
+    border: 1px solid var(--border-medium);
+    border-radius: 8px; /* Bordas arredondadas para o contêiner */
+    box-shadow: var(--shadow-md);
+    z-index: 99; /* Garante que fique acima de outros elementos */
+    max-height: 200px; /* Limita a altura e adiciona scroll */
+    overflow-y: auto;
+    display: none; /* Escondido por padrão */
+    padding: var(--spacing-sm) 0; /* Padding interno */
+}
+
+.suggestion-item {
+    padding: var(--spacing-md) var(--spacing-lg);
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+    transition: background-color 0.2s ease;
+}
+
+.suggestion-item:hover {
+    background-color: var(--primary-blue-lighter); /* Cor de hover */
+}
+
+
+/* --- Layout Principal: Sidebar --- */
+#sidebar {
+    position: fixed; top: 0; left: 0; height: 100%; width: 280px; max-width: 85vw;
+    background-color: var(--background-white); z-index: 1002;
+    transform: translateX(-100%); transition: transform var(--transition-ease) var(--transition-speed-normal);
+    display: flex; flex-direction: column;
+    box-shadow: var(--shadow-lg); /* Adicionado sombra para destaque */
+}
+#sidebar.active { transform: translateX(0); }
+
+.sidebar-header {
+    background-color: var(--primary-blue-dark); color: var(--text-white); /* Cor ajustada */
+    padding: var(--spacing-lg) var(--spacing-xl); display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1); /* Borda sutil */
+}
+.sidebar-user-info { color: var(--text-white); display: flex; align-items: center; gap: var(--spacing-md); text-decoration: none; }
+.sidebar-user-info i { font-size: 1.5rem; }
+.close-sidebar-btn { 
+    font-size: 1.8rem; cursor: pointer; 
+    color: var(--text-white); /* Garante que o X seja branco */
+    transition: transform 0.2s ease-in-out;
+}
+.close-sidebar-btn:hover {
+    transform: rotate(90deg); /* Efeito de rotação ao fechar */
+}
+
+.sidebar-links { list-style: none; overflow-y: auto; flex-grow: 1; padding-top: var(--spacing-sm); } /* Adicionado padding-top */
+.sidebar-links li a {
+    display: flex; align-items: center; gap: var(--spacing-lg); padding: var(--spacing-md) var(--spacing-xl);
+    color: var(--text-dark); text-decoration: none; border-bottom: 1px solid var(--border-light);
+    transition: background-color var(--transition-speed-fast), color var(--transition-speed-fast);
+}
+.sidebar-links li a:hover { background-color: var(--primary-blue-lighter); color: var(--primary-blue-dark); } /* Cores ajustadas */
+.sidebar-links .separator { height: 1px; background: var(--border-light); margin: var(--spacing-sm) var(--spacing-xl); }
+.admin-link { 
+    background-color: var(--primary-blue-lighter); /* Cor ajustada */
+    font-weight: 700; 
+    color: var(--primary-blue-dark) !important; /* Garante que a cor do texto seja escura */
+}
+.admin-link:hover {
+    background-color: var(--primary-blue-light); /* Cor de hover mais escura */
+}
+
+.submenu-toggle { justify-content: space-between; }
+.submenu-arrow { font-size: 0.8rem; transition: transform var(--transition-speed-normal); }
+.sidebar-category.active .submenu-arrow { transform: rotate(180deg); }
+.submenu { display: none; list-style: none; background-color: var(--background-light-grey); }
+.sidebar-category.active .submenu { display: block; }
+.submenu li a { 
+    padding-left: var(--spacing-3xl); 
+    font-size: 0.9rem; 
+    color: var(--text-medium); /* Cor do texto do submenu */
+}
+.submenu li a:hover {
+    background-color: var(--border-light); /* Fundo de hover mais claro para submenu */
+    color: var(--primary-blue-medium); /* Cor do texto de hover do submenu */
+}
+
+
+/* --- Overlay e Efeitos de Fundo --- */
+#overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6); z-index: 1001;
+    opacity: 0; visibility: hidden;
+    transition: opacity var(--transition-speed-normal), visibility var(--transition-speed-normal);
+}
+#overlay.active { opacity: 1; visibility: visible; }
+#main-content.blurred { filter: blur(4px); }
+
+/* --- Layout Principal: Rodapé --- */
+.main-footer {
+    background-color: var(--background-dark-grey); color: rgba(255,255,255,0.7);
+    text-align: center; padding: var(--spacing-xxl) var(--spacing-lg);
+    margin-top: var(--spacing-4xl); font-size: 0.85rem;
+}
+
+/* --- Alertas e Spinner --- */
+.flash-messages { position: fixed; top: 20px; right: 20px; z-index: 1003; max-width: 320px; }
+.alert {
+    padding: var(--spacing-lg); margin-bottom: var(--spacing-md); border-radius: 4px;
+    box-shadow: var(--shadow-md); opacity: 0; transform: translateX(20px);
+    transition: all var(--transition-speed-normal);
+}
+.alert.show { opacity: 1; transform: translateX(0); }
+.alert-success { background-color: #d4edda; color: #155724; }
+.alert-danger { background-color: #f8d7da; color: #721c24; }
+.alert-info { background-color: #d1ecf1; color: #0c5460; }
+.alert-warning { background-color: #fff3cd; color: #856404; }
+
+#loading-spinner { /* Estilos do spinner mantidos como no seu original */ }
+
+/* --- Carrossel de Imagens (Nova Seção) --- */
+.image-carousel-section {
+    padding: var(--spacing-3xl) 0;
+    background-color: var(--background-light);
+    position: relative;
+    overflow: hidden; /* Garante que as imagens que não estão visíveis fiquem escondidas */
+}
+
+.carousel-wrapper {
+    position: relative; /* Necessário para posicionar os botões e dots */
+    max-width: 900px; /* Limita a largura do carrossel */
+    margin: 0 auto; /* Centraliza o carrossel */
+    border-radius: 8px;
+    box-shadow: var(--shadow-md);
+}
+
+.carousel-container {
+    display: flex;
+    transition: transform 0.5s ease-in-out; /* Transição para o movimento do carrossel */
+    width: 100%; /* Ocupa 100% da largura do contêiner pai */
+    height: 400px; /* Altura fixa para o carrossel, ajuste conforme necessário */
+}
+
+.carousel-slide {
+    min-width: 100%; /* Cada slide ocupa 100% da largura do contêiner visível */
+    flex-shrink: 0; /* Impede que os slides encolham */
+    height: 100%;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.carousel-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Garante que a imagem cubra todo o slide sem distorção */
+    border-radius: 8px; /* Bordas arredondadas para as imagens */
+    box-shadow: var(--shadow-md);
+}
+
+.carousel-navigation {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    transform: translateY(-50%);
+    padding: 0 var(--spacing-lg);
+    z-index: 10;
+}
+
+.carousel-button {
+    background-color: rgba(0, 0, 0, 0.5);
+    color: var(--text-white);
+    border: none;
+    padding: var(--spacing-md);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+}
+
+.carousel-button:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.carousel-dots {
+    position: absolute;
+    bottom: var(--spacing-lg);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: var(--spacing-sm);
+    z-index: 10;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.dot.active {
+    background-color: var(--accent-orange); /* Ponto ativo com cor de destaque */
+}
+
+
+/* --- Media Queries (Layout Desktop) --- */
+@media (min-width: 769px) {
+    .container { padding: 0 var(--spacing-xl); }
+    .main-nav-bar { padding: var(--spacing-lg) 0; }
+    
+    /* Refatoração do layout do cabeçalho para usar Grid */
+    .main-nav-content {
+        display: grid;
+        /* Define 4 colunas:
+           1. Botão do menu lateral (largura automática)
+           2. Logo (largura automática, centralizado na coluna)
+           3. Barra de pesquisa (ocupa o espaço restante, com max-width)
+           4. Ações do usuário (largura automática)
+        */
+        grid-template-columns: auto auto 1fr auto;
+        align-items: center;
+        gap: var(--spacing-xl); /* Espaçamento entre os itens do grid */
+        position: relative; /* Garante que os itens dentro do grid se posicionem corretamente */
+    }
+
+    .sidebar-toggle-btn {
+        position: static; /* Remove posicionamento absoluto */
+        order: 1; /* Define a ordem no grid */
+    }
+    .logo-new {
+        position: static; /* Remove posicionamento absoluto */
+        transform: none; /* Remove a transformação de centralização */
+        order: 2; /* Define a ordem no grid */
+        justify-self: center; /* Centraliza o logo dentro de sua célula de grid */
+        margin-left: var(--spacing-xl); /* Adiciona uma margem para afastar do botão do menu */
+        margin-right: var(--spacing-xl); /* Adiciona uma margem para afastar da barra de pesquisa */
+    }
+    .search-bar {
+        position: static; /* Remove posicionamento absoluto */
+        order: 3; /* Define a ordem no grid */
+        margin: 0; /* Remove margens conflitantes */
+        max-width: 500px; /* Mantém a largura máxima */
+        justify-self: end; /* Alinha a barra de pesquisa ao final de sua célula de grid (direita) */
+        margin-right: var(--spacing-xl); /* Adiciona margem para afastar das ações do usuário */
+    }
+    .user-actions {
+        position: static; /* Remove posicionamento absoluto */
+        order: 4; /* Define a ordem no grid */
+    }
+
+    .carousel-container {
+        height: 500px; /* Aumenta a altura do carrossel em desktop */
+    }
+}
