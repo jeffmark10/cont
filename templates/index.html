@@ -18,13 +18,13 @@
         <div class="carousel-wrapper container"> {# Adicionado um wrapper para o carrossel #}
             <div class="carousel-container" id="imageCarousel">
                 <div class="carousel-slide">
-                    <img src="{{ url_for('static', filename='images/placeholder_glicemia.jpg') }}" alt="Projeto 1: Edifício Moderno">
+                    <img src="{{ url_for('static', filename='images/projeto_edificio_moderno.jpg') }}" alt="Projeto 1: Edifício Moderno">
                 </div>
                 <div class="carousel-slide">
-                    <img src="{{ url_for('static', filename='images/coenzima_q10.jpg') }}" alt="Projeto 2: Reforma Comercial">
+                    <img src="{{ url_for('static', filename='images/reforma_comercial_interior.jpg') }}" alt="Projeto 2: Reforma Comercial">
                 </div>
                 <div class="carousel-slide">
-                    <img src="{{ url_for('static', filename='images/placeholder_vitaminas.jpg') }}" alt="Projeto 3: Infraestrutura Urbana">
+                    <img src="{{ url_for('static', filename='images/infraestrutura_urbana.jpg') }}" alt="Projeto 3: Infraestrutura Urbana">
                 </div>
                 {# Adicione mais slides com suas imagens de projetos aqui #}
             </div>
@@ -78,7 +78,7 @@
                     <div class="product-image-container">
                         <img src="{{ url_for('static', filename='images/' + service.image) }}" class="card-img-top product-image" alt="{{ service.name }}">
                         <div class="product-image-overlay">
-                            <a href="{{ url_for('service_detail_page', service_category_slug='edificacoes', service_slug=service.service_slug) }}" class="btn-overlay">Ver Projeto</a> {# Link para a página de detalhes do serviço/projeto #}
+                            <a href="{{ url_for('service_detail_page', service_category_slug=service.category_slug, service_slug=service.service_slug) }}" class="btn-overlay">Ver Projeto</a> {# Link para a página de detalhes do serviço/projeto #}
                         </div>
                         {% if service.badge %}
                             <span class="product-badge">{{ service.badge }}</span>
@@ -87,7 +87,7 @@
                     <div class="card-body text-center">
                         <h5 class="card-title product-name">{{ service.name }}</h5>
                         <p class="card-text product-description">{{ service.description }}</p>
-                        <a href="{{ url_for('service_detail_page', service_category_slug='edificacoes', service_slug=service.service_slug) }}" class="btn btn-success btn-block add-to-cart-btn">
+                        <a href="{{ url_for('service_detail_page', service_category_slug=service.category_slug, service_slug=service.service_slug) }}" class="btn btn-success btn-block add-to-cart-btn">
                             <i class="fas fa-info-circle me-2"></i> Detalhes
                         </a>
                     </div>

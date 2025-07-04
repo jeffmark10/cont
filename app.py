@@ -1,10 +1,11 @@
 # Importa módulos necessários do Flask e outras bibliotecas
-from flask import Flask, render_template, request, flash, redirect, url_for, session, g
+from flask import Flask, render_template, request, flash, redirect, url_for, session, g, jsonify
 from datetime import datetime
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from markupsafe import Markup # Importe o Markup para renderizar HTML seguro
+import logging # Importa o módulo de logging
 
 # Importa módulos do Firebase Admin SDK
 from firebase_admin import credentials, initialize_app, firestore, get_app
@@ -18,6 +19,20 @@ app = Flask(__name__)
 # Carrega as configurações do arquivo config.py
 app.config.from_object(Config)
 
+# Configuração básica de logging
+if app.debug:
+    logging.basicConfig(level=logging.DEBUG, 
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+else:
+    logging.basicConfig(level=logging.INFO, 
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                        filename='app.log', # Salva logs em um arquivo em produção
+                        filemode='a') # 'a' para append
+
+# Obter um logger para o seu módulo
+logger = logging.getLogger(__name__)
+
+
 # Inicializa db e caches para coleções como None globalmente
 db = None
 _users_collection_cache = None
@@ -28,23 +43,23 @@ def initialize_firebase_app():
     global db
     try:
         get_app()
-        print("Firebase Admin SDK já inicializado.")
+        logger.info("Firebase Admin SDK já inicializado.")
     except ValueError:
-        print("Tentando inicializar Firebase Admin SDK...")
+        logger.info("Tentando inicializar Firebase Admin SDK...")
         path_to_json = os.path.join(os.path.dirname(os.path.abspath(__file__)), "serviceAccountKey.json")
         try:
             cred = credentials.Certificate(path_to_json)
             initialize_app(cred)
-            print("Firebase Admin SDK inicializado com sucesso.")
+            logger.info("Firebase Admin SDK inicializado com sucesso.")
         except Exception as e_cert:
-            print(f"\nERRO CRÍTICO NA INICIALIZAÇÃO DO FIREBASE: {e_cert}\n")
+            logger.critical(f"ERRO CRÍTICO NA INICIALIZAÇÃO DO FIREBASE: {e_cert}")
             db = None
             return
     try:
         db = firestore.client()
-        print("Cliente Firestore obtido com sucesso.")
+        logger.info("Cliente Firestore obtido com sucesso.")
     except Exception as e_get_client:
-        print(f"\nERRO AO OBTER CLIENTE FIRESTORE: {e_get_client}")
+        logger.critical(f"ERRO AO OBTER CLIENTE FIRESTORE: {e_get_client}")
         db = None
 
 initialize_firebase_app()
@@ -132,7 +147,7 @@ def load_logged_in_user():
             if user_doc.exists: g.user = user_doc.to_dict()
             else: session.pop('user_email', None)
         except Exception as e:
-            print(f"Erro ao carregar usuário: {e}")
+            logger.error(f"Erro ao carregar usuário: {e}")
             g.user = None
 
 # --- DECORADOR DE ADMIN ---
@@ -154,16 +169,19 @@ def home():
     featured_services = [] # Renomeado de featured_products
     if services_ref:
         try:
-            # Busca alguns serviços para destaque na página inicial
             query = services_ref.limit(3).stream()
             for doc in query:
                 service_data = doc.to_dict()
                 service_data['id'] = doc.id
-                # Adiciona um badge de exemplo, pode ser dinâmico no futuro
+                # Garante que category_slug esteja presente
+                # Se você adicionou no Firestore, ele virá de lá.
+                # Caso contrário, adicione uma lógica para inferir ou um valor padrão.
+                service_data['category_slug'] = service_data.get('category_slug', 'edificacoes') # Fallback para garantir que o link funcione
+                
                 if len(featured_services) == 0: service_data['badge'] = 'NOVO'
                 featured_services.append(service_data)
         except Exception as e:
-            print(f"Erro ao buscar serviços em destaque: {e}")
+            logger.error(f"Erro ao buscar serviços em destaque: {e}")
             
     return render_template('index.html', featured_services=featured_services) # Atualizado para featured_services
 
@@ -186,6 +204,10 @@ def contact(): return render_template('contact.html')
 
 @app.route('/escritorios') # Renomeado de /lojas
 def offices(): return render_template('stores.html') # Mantém o nome do template por simplicidade, mas o conteúdo será alterado
+
+@app.route('/portfolio') # NOVA ROTA PARA O PORTFÓLIO
+def portfolio():
+    return render_template('portfolio.html')
 
 # --- ROTAS DE SERVIÇOS E CATEGORIAS ---
 @app.route('/area/<string:service_category_slug>') # Renomeado de /categoria/<string:category_name>
@@ -222,7 +244,7 @@ def service_detail_page(service_category_slug, service_slug):
                 if 'description_html' in service_details_data:
                     service_details_data['description_html'] = Markup(service_details_data['description_html'])
         except Exception as e:
-            print(f"Erro ao buscar detalhes do serviço '{service_slug}': {e}")
+            logger.error(f"Erro ao buscar detalhes do serviço '{service_slug}': {e}")
     
     services_ref = get_services_collection_ref() # Renomeado de products_ref
     related_projects = [] # Renomeado de products para related_projects
@@ -236,7 +258,7 @@ def service_detail_page(service_category_slug, service_slug):
                 project_data['id'] = doc.id
                 related_projects.append(project_data)
         except Exception as e:
-            print(f"ERRO ao buscar projetos para '{service_slug}': {e}")
+            logger.error(f"ERRO ao buscar projetos para '{service_slug}': {e}")
             flash("Ocorreu um erro ao carregar os projetos relacionados.", "danger")
             related_projects = []
 
@@ -270,6 +292,7 @@ def login():
             flash('E-mail ou senha incorretos.', 'danger')
         except Exception as e:
             flash(f'Erro no servidor: {e}', 'danger')
+            logger.error(f"Erro durante o login: {e}")
     return render_template('login.html')
 
 @app.route('/cadastro', methods=['GET', 'POST'])
@@ -290,17 +313,21 @@ def register():
                  flash('Serviço de cadastro indisponível.', 'danger')
                  return render_template('register.html')
                  
-            if users_ref.document(email).get().exists:
-                flash('Este e-mail já está cadastrado.', 'danger')
-            else:
-                users_ref.document(email).set({
-                    'name': name, 'email': email,
-                    'password_hash': generate_password_hash(password),
-                    'created_at': firestore.SERVER_TIMESTAMP,
-                    'role': 'user' # Todos os novos usuários são 'user' por padrão
-                })
-                flash('Cadastro realizado com sucesso! Faça login.', 'success')
-                return redirect(url_for('login'))
+            try:
+                if users_ref.document(email).get().exists:
+                    flash('Este e-mail já está cadastrado.', 'danger')
+                else:
+                    users_ref.document(email).set({
+                        'name': name, 'email': email,
+                        'password_hash': generate_password_hash(password),
+                        'created_at': firestore.SERVER_TIMESTAMP,
+                        'role': 'user' # Todos os novos usuários são 'user' por padrão
+                    })
+                    flash('Cadastro realizado com sucesso! Faça login.', 'success')
+                    return redirect(url_for('login'))
+            except Exception as e:
+                flash(f'Erro ao registrar usuário: {e}', 'danger')
+                logger.error(f"Erro durante o registro: {e}")
     return render_template('register.html')
 
 @app.route('/logout')
@@ -323,7 +350,7 @@ def admin_services(): # Renomeado de admin_products
                 service_data['id'] = doc.id
                 all_services.append(service_data)
         except Exception as e:
-            print(f"Erro ao buscar serviços para administração: {e}")
+            logger.error(f"Erro ao buscar serviços para administração: {e}")
             flash("Ocorreu um erro ao carregar os serviços.", "danger")
 
     # Coleta todos os slugs de serviços para o dropdown no formulário
@@ -356,6 +383,17 @@ def add_service():
             flash('Serviço de banco de dados indisponível.', 'danger')
             return redirect(url_for('admin_services'))
 
+        # Determina a category_slug a partir da service_slug
+        found_category_slug = None
+        for cat_slug, cat_data in SERVICE_ROUTES_MAP.items():
+            if service_slug in cat_data['services']:
+                found_category_slug = cat_slug
+                break
+        
+        if not found_category_slug:
+            flash('Erro: service_slug não corresponde a nenhuma categoria conhecida.', 'danger')
+            return redirect(url_for('admin_services'))
+
         try:
             # Adiciona um novo documento à coleção 'services'
             services_ref.add({
@@ -363,11 +401,13 @@ def add_service():
                 'description': description,
                 'image': image if image else 'placeholder_default.jpg', # Imagem padrão se não for fornecida
                 'service_slug': service_slug,
+                'category_slug': found_category_slug, # Adiciona a category_slug
                 'created_at': firestore.SERVER_TIMESTAMP
             })
             flash('Serviço adicionado com sucesso!', 'success')
         except Exception as e:
             flash(f'Erro ao adicionar serviço: {e}', 'danger')
+            logger.error(f"Erro ao adicionar serviço: {e}")
     return redirect(url_for('admin_services'))
 
 @app.route('/admin/services/edit/<string:service_id>', methods=['GET', 'POST'])
@@ -387,6 +427,7 @@ def edit_service(service_id):
             return redirect(url_for('admin_services'))
     except Exception as e:
         flash(f'Erro ao buscar serviço para edição: {e}', 'danger')
+        logger.error(f"Erro ao buscar serviço para edição: {e}")
         return redirect(url_for('admin_services'))
 
     if request.method == 'POST':
@@ -399,17 +440,30 @@ def edit_service(service_id):
             flash('Por favor, preencha todos os campos obrigatórios.', 'warning')
             return redirect(url_for('edit_service', service_id=service_id))
 
+        # Determina a category_slug a partir da service_slug
+        found_category_slug = None
+        for cat_slug, cat_data in SERVICE_ROUTES_MAP.items():
+            if service_slug in cat_data['services']:
+                found_category_slug = cat_slug
+                break
+
+        if not found_category_slug:
+            flash('Erro: service_slug não corresponde a nenhuma categoria conhecida.', 'danger')
+            return redirect(url_for('edit_service', service_id=service_id))
+
         try:
             service_doc_ref.update({
                 'name': name,
                 'description': description,
                 'image': image if image else 'placeholder_default.jpg',
-                'service_slug': service_slug
+                'service_slug': service_slug,
+                'category_slug': found_category_slug # Atualiza a category_slug
             })
             flash('Serviço atualizado com sucesso!', 'success')
             return redirect(url_for('admin_services'))
         except Exception as e:
             flash(f'Erro ao atualizar serviço: {e}', 'danger')
+            logger.error(f"Erro ao atualizar serviço: {e}")
             return redirect(url_for('edit_service', service_id=service_id))
 
     # Coleta todos os slugs de serviços para o dropdown no formulário
@@ -437,10 +491,57 @@ def delete_service(service_id):
         flash('Serviço excluído com sucesso!', 'success')
     except Exception as e:
         flash(f'Erro ao excluir serviço: {e}', 'danger')
+        logger.error(f"Erro ao excluir serviço: {e}")
     return redirect(url_for('admin_services'))
+
+# --- Rota de API para Sugestões de Pesquisa ---
+@app.route('/api/search_suggestions')
+def search_suggestions():
+    query_term = request.args.get('q', '').lower()
+    suggestions = []
+    
+    if not query_term or len(query_term) < 2: # Retorna vazio se o termo for muito curto
+        return jsonify(suggestions)
+
+    services_ref = get_services_collection_ref()
+    if not services_ref:
+        logger.error("Erro: Coleção de serviços não disponível para sugestões de pesquisa.")
+        return jsonify({"error": "Serviço de busca indisponível."}), 500
+
+    try:
+        # Pega todos os serviços (ou um número limitado, se houver muitos)
+        # Atenção: Para grandes volumes, considere aprimorar a consulta do Firestore
+        # ou usar um serviço de busca dedicado (ex: Algolia)
+        all_services_docs = services_ref.stream() 
+        
+        for doc in all_services_docs:
+            service_data = doc.to_dict()
+            service_name = service_data.get('name', '').lower()
+            service_description = service_data.get('description', '').lower()
+            service_slug = service_data.get('service_slug')
+            service_category_slug = service_data.get('category_slug', 'edificacoes') # Pega a categoria ou usa um padrão
+            
+            # Verifica se o termo de busca está no nome ou descrição do serviço
+            if query_term in service_name or query_term in service_description:
+                suggestions.append({
+                    'name': service_data.get('name'),
+                    'slug': service_slug,
+                    'category_slug': service_category_slug, # Essencial para o link correto
+                    'link_url': url_for('service_detail_page', service_category_slug=service_category_slug, service_slug=service_slug)
+                })
+            
+            if len(suggestions) >= 10: # Limite o número de sugestões para melhor UX
+                break
+                
+    except Exception as e:
+        logger.error(f"Erro ao buscar sugestões de pesquisa no Firestore: {e}")
+        return jsonify({"error": "Erro interno ao buscar sugestões."}), 500
+        
+    return jsonify(suggestions)
+
 
 # --- EXECUÇÃO DA APLICAÇÃO ---
 if __name__ == '__main__':
-    if not app.config.get('SECRET_KEY'):
-         print("\nAVISO: 'SECRET_KEY' não configurada!\n")
+    if not app.config.get('SECRET_KEY') or app.config['SECRET_KEY'] == 'SUA_CHAVE_SECRETA_MUITO_FORTE':
+         logger.warning("AVISO: 'SECRET_KEY' não configurada ou usando valor padrão de desenvolvimento. Mude em produção!")
     app.run(debug=True)

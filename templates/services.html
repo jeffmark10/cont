@@ -1,131 +1,61 @@
 {% extends "base.html" %}
 
-{% block title %}Nossos Serviços - Sua Empresa de Construção e Terceirização{% endblock %}
+{% block title %}Nosso Portfólio - Sua Empresa de Construção e Terceirização{% endblock %} {# Título atualizado #}
 
 {% block content %}
     <section class="page-header">
-        <h1>Nossos Serviços de Construção e Terceirização</h1>
-        <p>Conheça a variedade de soluções completas que oferecemos para o seu projeto.</p>
+        <h1>Nosso Portfólio de Projetos</h1> {# Título da seção atualizado #}
+        <p>Explore alguns dos nossos principais projetos e veja a qualidade e expertise que oferecemos.</p> {# Subtítulo atualizado #}
     </section>
 
     <section class="content-section">
-        <div class="service-grid-overview"> {# Nova classe para o grid de serviços #}
-            {# Loop através das categorias de serviços definidas no SERVICE_ROUTES_MAP #}
-            {% for category_slug, category_data in SERVICE_ROUTES_MAP.items() %}
-                <div class="service-category-card"> {# Card para cada categoria #}
-                    <h2 class="service-category-title">{{ category_data.display_name }}</h2>
-                    <p class="service-category-description">Explore os serviços que oferecemos em {{ category_data.display_name | lower }}.</p>
-                    <ul class="service-list-items">
-                        {% for service_slug, service_title in category_data.services.items() %}
-                            <li>
-                                <a href="{{ url_for('service_detail_page', service_category_slug=category_slug, service_slug=service_slug) }}">
-                                    <i class="fas fa-check-circle service-list-icon"></i> {{ service_title }}
-                                </a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                    <div class="text-center mt-4">
-                        <a href="{{ url_for('service_category_overview', service_category_slug=category_slug) }}" class="btn btn-sm">Ver Todos</a>
+        {% if all_projects %} {# A variável agora é all_projects #}
+            <div class="product-grid"> {# Reutilizando a classe product-grid para o layout de cards #}
+                {% for project in all_projects %} {# Loop sobre cada projeto #}
+                    <div class="product-card"> {# Reutilizando a classe product-card para o estilo de cada item #}
+                        <div class="product-image-container">
+                            <img src="{{ url_for('static', filename='images/' + project.image if project.image else 'placeholder_default.jpg') }}" 
+                                 class="product-image" 
+                                 alt="{{ project.name }}">
+                            <div class="product-image-overlay">
+                                {# O link deve levar para a página de detalhes do serviço/projeto.
+                                   Assumimos que project.service_slug existe e é um slug válido para a categoria e o serviço.
+                                   Se o service_slug não for suficiente para a categoria, você precisaria de uma forma de mapear o projeto de volta para sua categoria principal.
+                                   Por simplicidade, estamos usando project.service_slug para ambos aqui, o que funciona se o slug do serviço for único e também servir como categoria.
+                                   Caso contrário, você pode precisar ajustar a lógica no app.py para passar a category_slug também, ou usar uma rota genérica de detalhes de projeto.
+                                #}
+                                <a href="{{ url_for('service_detail_page', service_category_slug=project.service_slug, service_slug=project.service_slug) }}" class="btn-overlay">Ver Projeto</a>
+                            </div>
+                            {% if project.badge %} {# Se você tiver um campo 'badge' para projetos (ex: 'Concluído', 'Em Andamento') #}
+                                <span class="product-badge">{{ project.badge }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="card-body text-center">
+                            <h5 class="card-title product-name">{{ project.name }}</h5>
+                            <p class="card-text product-description">{{ project.description }}</p>
+                            <a href="{{ url_for('service_detail_page', service_category_slug=project.service_slug, service_slug=project.service_slug) }}" class="btn btn-success btn-block add-to-cart-btn">
+                                <i class="fas fa-info-circle me-2"></i> Detalhes do Projeto
+                            </a>
+                        </div>
                     </div>
-                </div>
-            {% endfor %}
-        </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state-container text-center">
+                <i class="fas fa-hammer empty-state-icon"></i>
+                <h2>Nenhum projeto no portfólio ainda.</h2>
+                <p class="text-light-gray">
+                    Estamos trabalhando para adicionar nossos incríveis projetos aqui. Volte em breve!
+                </p>
+            </div>
+        {% endif %}
 
         <div class="text-center mt-8">
-            <p class="text-lg text-gray-700">Não encontrou o que procura? Entre em contato para soluções personalizadas!</p>
-            <a href="{{ url_for('contact') }}" class="btn cta-btn mt-4">Solicitar Orçamento Personalizado</a>
+            <p class="text-lg text-gray-700">Gostou do que viu? Solicite um orçamento para o seu projeto!</p>
+            <a href="{{ url_for('contact') }}" class="btn cta-btn mt-4">Solicitar Orçamento</a>
         </div>
     </section>
 
 {% endblock %}
 
-{% block head_extra %}
-<style>
-    /* Estilos específicos para a página de serviços */
-    .service-grid-overview {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: var(--spacing-xl);
-        padding: var(--spacing-xxl) 0;
-    }
-
-    .service-category-card {
-        background-color: var(--background-white);
-        border-radius: 8px;
-        box-shadow: var(--shadow-sm);
-        padding: var(--spacing-xl);
-        display: flex;
-        flex-direction: column;
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    }
-
-    .service-category-card:hover {
-        transform: translateY(-5px);
-        box-shadow: var(--shadow-md);
-    }
-
-    .service-category-title {
-        font-family: var(--font-family-heading);
-        font-size: 1.6rem;
-        color: var(--primary-green-dark);
-        margin-bottom: var(--spacing-md);
-        text-align: center;
-    }
-
-    .service-category-description {
-        font-size: 0.95rem;
-        color: var(--text-light-gray);
-        margin-bottom: var(--spacing-lg);
-        text-align: center;
-        flex-grow: 1; /* Para que todos os cards tenham altura similar */
-    }
-
-    .service-list-items {
-        list-style: none;
-        padding: 0;
-        margin-bottom: var(--spacing-lg);
-    }
-
-    .service-list-items li {
-        margin-bottom: var(--spacing-sm);
-    }
-
-    .service-list-items a {
-        display: flex;
-        align-items: center;
-        color: var(--text-dark);
-        text-decoration: none;
-        transition: color 0.2s ease-in-out;
-    }
-
-    .service-list-items a:hover {
-        color: var(--primary-green-emerald);
-        text-decoration: underline;
-    }
-
-    .service-list-icon {
-        color: var(--primary-green-emerald);
-        margin-right: var(--spacing-sm);
-    }
-
-    .btn-sm {
-        padding: var(--spacing-sm) var(--spacing-lg);
-        font-size: 0.9rem;
-        border-radius: 50px;
-        background-color: var(--primary-green-emerald);
-        color: var(--text-white);
-        text-decoration: none;
-        transition: background-color 0.2s ease-in-out;
-    }
-
-    .btn-sm:hover {
-        background-color: var(--primary-green-dark);
-    }
-
-    @media (min-width: 769px) {
-        .service-grid-overview {
-            grid-template-columns: repeat(3, 1fr); /* 3 colunas em desktop */
-        }
-    }
-</style>
-{% endblock %}
+{# Removido o bloco head_extra com estilos específicos, pois product-grid e product-card já estão em components.css #}

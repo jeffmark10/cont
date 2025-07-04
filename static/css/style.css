@@ -42,6 +42,14 @@
 
 /* --- Reset e Estilos Base --- */
 * { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* Adicionado reset para HTML e Body para garantir altura total e remover margens padrão */
+html, body {
+    height: 100%; /* Garante que HTML e Body ocupem a altura total da viewport */
+    margin: 0;
+    padding: 0;
+}
+
 body {
     font-family: var(--font-family-body);
     line-height: 1.6;
@@ -365,7 +373,7 @@ a:hover { color: var(--primary-blue-dark); } /* Cor ajustada */
         margin-right: var(--spacing-xl); /* Adiciona uma margem para afastar da barra de pesquisa */
     }
     .search-bar {
-        position: static; /* Remove posicionamento absoluto */
+        display: flex; /* Garante que a barra de pesquisa seja flexível */
         order: 3; /* Define a ordem no grid */
         margin: 0; /* Remove margens conflitantes */
         max-width: 500px; /* Mantém a largura máxima */

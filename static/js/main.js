@@ -231,9 +231,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     div.addEventListener('mousedown', (event) => { // Usar mousedown para capturar antes do blur
                         event.preventDefault(); // Previne o blur do input
                         searchInput.value = suggestion.name; // Preenche o input com a sugestão
-                        // Você pode redirecionar para a página de detalhes do serviço/projeto ou uma página de resultados de busca
-                        // Exemplo: window.location.href = `/servicos/${suggestion.slug}`; 
-                        // Ou enviar o formulário: searchInput.closest('form').submit();
+                        // Redireciona para a página de detalhes do serviço/projeto usando o link_url completo
+                        window.location.href = suggestion.link_url; 
                         searchSuggestionsContainer.style.display = 'none'; // Esconde as sugestões
                     });
                     searchSuggestionsContainer.appendChild(div);

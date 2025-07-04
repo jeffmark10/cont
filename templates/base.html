@@ -26,7 +26,7 @@
     <!-- Menu Lateral (Sidebar) -->
     <nav id="sidebar">
         <div class="sidebar-header">
-            <a href="#" class="sidebar-user-info">
+            <a href="{{ url_for('meu_perfil') if g.user else url_for('login') }}" class="sidebar-user-info">
                 {% if g.user %}
                     <i class="fas fa-user-circle"></i>
                     <span class="user-greeting">Olá, {{ logged_in_user_first_name }}!</span>
@@ -42,36 +42,35 @@
             <li><a href="{{ url_for('home') }}"><i class="fas fa-home"></i> Início</a></li>
             {% if g.user %}
                 <li><a href="{{ url_for('meu_perfil') }}"><i class="fas fa-user"></i> Meu Perfil</a></li>
-                <li><a href="#"><i class="fas fa-project-diagram"></i> Meus Projetos/Solicitações</a></li> {# Adicionado link para projetos/solicitações #}
+                <li><a href="#"><i class="fas fa-project-diagram"></i> Meus Projetos/Solicitações</a></li>
             {% endif %}
             <li class="separator"></li>
             
-            <li><a href="{{ url_for('services_overview') }}"><i class="fas fa-hard-hat"></i> Nossos Serviços</a></li> {# Link para a página geral de serviços #}
+            <li><a href="{{ url_for('portfolio') }}"><i class="fas fa-hard-hat"></i> Nosso Portfólio</a></li>
 
-            {% for category_slug, category_data in SERVICE_ROUTES_MAP.items() %} {# Atualizado para SERVICE_ROUTES_MAP #}
+            {% for category_slug, category_data in SERVICE_ROUTES_MAP.items() %} {# CORRIGIDO: Usando SERVICE_ROUTES_MAP #}
                 <li class="sidebar-category has-submenu">
                     <a href="#" class="submenu-toggle">
                         {{ category_data.display_name }} 
                         <i class="fas fa-chevron-down submenu-arrow"></i>
                     </a>
                     <ul class="submenu">
-                        <li><a href="{{ url_for('service_category_overview', service_category_slug=category_slug) }}">Ver Tudo em {{ category_data.display_name }}</a></li> {# Atualizado para service_category_overview #}
-                        {% for service_slug, service_title in category_data.services.items() %} {# Atualizado para .services.items() #}
-                            <li><a href="{{ url_for('service_detail_page', service_category_slug=category_slug, service_slug=service_slug) }}">{{ service_title }}</a></li> {# Atualizado para service_detail_page #}
+                        <li><a href="{{ url_for('service_category_overview', service_category_slug=category_slug) }}">Ver Tudo em {{ category_data.display_name }}</a></li>
+                        {% for service_slug, service_title in category_data.services.items() %} {# Usando .services.items() #}
+                            <li><a href="{{ url_for('service_detail_page', service_category_slug=category_slug, service_slug=service_slug) }}">{{ service_title }}</a></li>
                         {% endfor %}
                     </ul>
                 </li>
             {% endfor %}
 
             <li class="separator"></li>
-            {# Link para WhatsApp pode ser mantido para orçamento rápido #}
             <li><a href="https://wa.me/5521999998888?text=Ol%C3%A1%2C%20gostaria%20de%20solicitar%20um%20or%C3%A7amento." target="_blank"><i class="fab fa-whatsapp"></i> Solicite um Orçamento</a></li>
             <li><a href="{{ url_for('about') }}"><i class="fas fa-info-circle"></i> Sobre Nós</a></li>
-            <li><a href="{{ url_for('offices') }}"><i class="fas fa-building"></i> Nossos Escritórios</a></li> {# Atualizado para offices #}
+            <li><a href="{{ url_for('offices') }}"><i class="fas fa-building"></i> Nossos Escritórios</a></li>
             
-            {% if g.user and g.user.email == 'jeffersongarcia2013@gmail.com' %} {# Condição de admin mais específica #}
+            {% if g.user and g.user.email == 'jeffersongarcia2013@gmail.com' %}
                 <li class="separator"></li>
-                <li><a href="{{ url_for('admin_services') }}" class="admin-link"><i class="fas fa-tools"></i> Gerenciar Serviços</a></li> {# Atualizado para admin_services #}
+                <li><a href="{{ url_for('admin_services') }}" class="admin-link"><i class="fas fa-tools"></i> Gerenciar Serviços</a></li>
             {% endif %}
             
             {% if g.user %}
@@ -81,10 +80,11 @@
         </ul>
     </nav>
 
+    {% block header %}
     <header class="main-header-new">
         <div class="top-bar">
             <div class="container top-bar-content">
-                <span>Sua Parceira em Soluções de Construção e Terceirização</span> {# Nova mensagem #}
+                <span>Sua Parceira em Soluções de Construção e Terceirização</span>
             </div>
         </div>
 
@@ -95,18 +95,17 @@
                 </a>
 
                 <a href="{{ url_for('home') }}" class="logo-new">
-                    <span class="logo-text">Sua Empresa</span> {# Nome da empresa #}
-                    <span class="logo-subtitle">Construção e Terceirização</span> {# Novo subtítulo #}
+                    <span class="logo-text">Sua Empresa</span>
+                    <span class="logo-subtitle">Construção e Terceirização</span>
                 </a>
 
                 <form action="#" method="get" class="search-bar">
-                    <input type="text" name="q" placeholder="O que você procura?">
+                    <input type="text" name="q" placeholder="Buscar serviços, projetos...">
                     <button type="submit"><i class="fas fa-search"></i></button>
-                    <div id="searchSuggestions" class="search-suggestions"></div> {# Adicionado o contêiner de sugestões #}
+                    <div id="searchSuggestions" class="search-suggestions"></div>
                 </form>
 
                 <div class="user-actions">
-                    {# Removido o carrinho, adicionado link de contato/orçamento #}
                     <a href="{{ url_for('contact') }}" class="action-item">
                         <i class="fas fa-headset"></i>
                         <span>Contato</span>
@@ -119,8 +118,9 @@
             </div>
         </div>
     </header>
+    {% endblock %}
 
-    <main id="main-content">
+    <main id="main-content" class="{% block main_content_classes %}{% endblock %}">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="flash-messages">
@@ -134,10 +134,12 @@
         {% block content %}{% endblock %}
     </main>
 
+    {% block footer %}
     <footer class="main-footer">
         <p>&copy; {{ year }} Sua Empresa de Construção e Terceirização. Todos os direitos reservados.</p>
-        <p>Endereço: Rua da Construção, 456 - Bairro Projetado, Cidade - UF, CEP: 98765-432</p>
+        <p>Endereço: Rua da Construção, 456 - Bairro Projetado, Cidade - UF, CEP: 12345-678</p>
     </footer>
+    {% endblock %}
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% block scripts %}{% endblock %}
