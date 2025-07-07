@@ -6,9 +6,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from markupsafe import Markup # Importe o Markup para renderizar HTML seguro
 import logging # Importa o módulo de logging
+import uuid # Para gerar nomes de ficheiro únicos
 
 # Importa módulos do Firebase Admin SDK
-from firebase_admin import credentials, initialize_app, firestore, get_app
+from firebase_admin import credentials, initialize_app, firestore, get_app, storage # NOVO: Importa storage
 from firebase_admin.exceptions import FirebaseError
 
 # Importa a classe Config do arquivo config.py
@@ -32,6 +33,9 @@ else:
 # Obter um logger para o seu módulo
 logger = logging.getLogger(__name__)
 
+# Adiciona logging para o APP_ID em uso
+logger.debug(f"APP_ID em uso: {app.config['APP_ID']}")
+
 
 # Inicializa db e caches para coleções como None globalmente
 db = None
@@ -49,8 +53,9 @@ def initialize_firebase_app():
         path_to_json = os.path.join(os.path.dirname(os.path.abspath(__file__)), "serviceAccountKey.json")
         try:
             cred = credentials.Certificate(path_to_json)
-            initialize_app(cred)
-            logger.info("Firebase Admin SDK inicializado com sucesso.")
+            # NOVO: Inicializa o Storage com o nome do bucket
+            initialize_app(cred, {'storageBucket': app.config['FIREBASE_STORAGE_BUCKET']}) 
+            logger.info("Firebase Admin SDK e Storage inicializados com sucesso.")
         except Exception as e_cert:
             logger.critical(f"ERRO CRÍTICO NA INICIALIZAÇÃO DO FIREBASE: {e_cert}")
             db = None
@@ -117,7 +122,8 @@ def get_users_collection_ref():
     global _users_collection_cache
     if _users_collection_cache: return _users_collection_cache
     if db:
-        app_id = os.environ.get('CANVAS_APP_ID', 'default-app-id')
+        # Usa app.config['APP_ID'] para garantir consistência com o config.py
+        app_id = app.config['APP_ID'] 
         _users_collection_cache = db.collection(f'artifacts/{app_id}/users')
         return _users_collection_cache
     return None
@@ -126,7 +132,8 @@ def get_services_collection_ref(): # Renomeado de get_products_collection_ref
     global _services_collection_cache
     if _services_collection_cache: return _services_collection_cache
     if db:
-        app_id = os.environ.get('CANVAS_APP_ID', 'default-app-id')
+        # Usa app.config['APP_ID'] para garantir consistência com o config.py
+        app_id = app.config['APP_ID'] 
         _services_collection_cache = db.collection(f'artifacts/{app_id}/public/data/services') # Caminho da coleção alterado
         return _services_collection_cache
     return None
@@ -160,6 +167,30 @@ def admin_required(f):
             return redirect(url_for('home'))
         return f(*args, **kwargs)
     return decorated_function
+
+# --- FUNÇÃO AUXILIAR PARA UPLOAD DE IMAGEM ---
+def upload_image_to_firebase_storage(image_file):
+    if not image_file:
+        return None
+
+    try:
+        bucket = storage.bucket() # Obtém o bucket padrão
+        # Gera um nome de ficheiro único para evitar colisões
+        filename = f"service_images/{uuid.uuid4()}_{image_file.filename}"
+        blob = bucket.blob(filename)
+        
+        # Faz o upload do ficheiro
+        blob.upload_from_file(image_file)
+        
+        # Define o ficheiro como público (se as regras permitirem)
+        # Atenção: Em produção, considere outras formas de acesso (tokens de download)
+        blob.make_public() 
+        
+        logger.info(f"Ficheiro '{filename}' carregado para o Firebase Storage. URL: {blob.public_url}")
+        return blob.public_url # Retorna a URL pública do ficheiro
+    except Exception as e:
+        logger.error(f"Erro ao carregar ficheiro para o Firebase Storage: {e}")
+        return None
 
 # --- ROTAS PRINCIPAIS E ESTÁTICAS ---
 @app.route('/')
@@ -207,13 +238,34 @@ def offices(): return render_template('stores.html') # Mantém o nome do templat
 
 @app.route('/portfolio') # NOVA ROTA PARA O PORTFÓLIO
 def portfolio():
-    return render_template('portfolio.html')
+    services_ref = get_services_collection_ref()
+    portfolio_projects = []
+    if services_ref:
+        try:
+            # Busca todos os serviços/projetos para o portfólio.
+            # Se você tiver um campo para marcar "projetos de portfólio" (ex: 'is_portfolio_item': True),
+            # pode adicionar um .where('is_portfolio_item', '==', True) aqui.
+            query = services_ref.stream()
+            for doc in query:
+                project_data = doc.to_dict()
+                project_data['id'] = doc.id
+                # Garante que category_slug esteja presente para a construção de links
+                project_data['category_slug'] = project_data.get('category_slug', 'edificacoes') # Fallback
+                portfolio_projects.append(project_data)
+        except Exception as e:
+            logger.error(f"Erro ao buscar projetos para o portfólio: {e}")
+            flash("Ocorreu um erro ao carregar os projetos do portfólio.", "danger")
+            portfolio_projects = [] # Garante que a lista esteja vazia em caso de erro
+
+    return render_template('portfolio.html', projects=portfolio_projects)
 
 # --- ROTAS DE SERVIÇOS E CATEGORIAS ---
 @app.route('/area/<string:service_category_slug>') # Renomeado de /categoria/<string:category_name>
 def service_category_overview(service_category_slug):
+    logger.debug(f"Acessando service_category_overview com category_slug: {service_category_slug}")
     category_data = SERVICE_ROUTES_MAP.get(service_category_slug) # Atualizado para SERVICE_ROUTES_MAP
     if not category_data:
+        logger.warning(f"Categoria de serviço '{service_category_slug}' não encontrada no SERVICE_ROUTES_MAP.")
         flash(f'Categoria de serviço "{service_category_slug}" não encontrada.', 'warning')
         return redirect(url_for('home'))
 
@@ -221,6 +273,7 @@ def service_category_overview(service_category_slug):
     services_in_category = []
     for slug, title in category_data['services'].items(): # Atualizado para 'services'
         services_in_category.append({'key': slug, 'title': title})
+    logger.debug(f"Serviços na categoria {service_category_slug}: {services_in_category}")
 
     return render_template('category_overview.html', 
                            category_key=service_category_slug, 
@@ -229,8 +282,16 @@ def service_category_overview(service_category_slug):
 
 @app.route('/<string:service_category_slug>/<string:service_slug>') # Renomeado de /<string:category_slug>/<string:subtopic_slug>
 def service_detail_page(service_category_slug, service_slug):
+    logger.debug(f"Acessando service_detail_page com category_slug: {service_category_slug}, service_slug: {service_slug}")
+    
     category_data = SERVICE_ROUTES_MAP.get(service_category_slug) # Atualizado para SERVICE_ROUTES_MAP
-    if not category_data or service_slug not in category_data['services']: # Atualizado para 'services'
+    if not category_data:
+        logger.warning(f"Categoria de serviço '{service_category_slug}' não encontrada no SERVICE_ROUTES_MAP.")
+        flash('Página de serviço não encontrada.', 'warning')
+        return redirect(url_for('home'))
+        
+    if service_slug not in category_data['services']:
+        logger.warning(f"Service slug '{service_slug}' não encontrado na categoria '{service_category_slug}' no SERVICE_ROUTES_MAP.")
         flash('Página de serviço não encontrada.', 'warning')
         return redirect(url_for('home'))
         
@@ -238,13 +299,17 @@ def service_detail_page(service_category_slug, service_slug):
     if db:
         try:
             # Busca detalhes específicos do serviço no Firestore
+            # Nota: A coleção 'service_details' deve conter documentos com o service_slug como ID
             service_ref = db.collection('service_details').document(service_slug).get() # Coleção alterada
             if service_ref.exists:
                 service_details_data = service_ref.to_dict()
+                logger.debug(f"Detalhes do serviço encontrados para '{service_slug}': {service_details_data}")
                 if 'description_html' in service_details_data:
                     service_details_data['description_html'] = Markup(service_details_data['description_html'])
+            else:
+                logger.warning(f"Documento de detalhes do serviço não encontrado no Firestore para service_slug: {service_slug}")
         except Exception as e:
-            logger.error(f"Erro ao buscar detalhes do serviço '{service_slug}': {e}")
+            logger.error(f"Erro ao buscar detalhes do serviço '{service_slug}' no Firestore: {e}")
     
     services_ref = get_services_collection_ref() # Renomeado de products_ref
     related_projects = [] # Renomeado de products para related_projects
@@ -257,6 +322,7 @@ def service_detail_page(service_category_slug, service_slug):
                 project_data = doc.to_dict()
                 project_data['id'] = doc.id
                 related_projects.append(project_data)
+            logger.debug(f"Projetos relacionados encontrados para '{service_slug}': {len(related_projects)}")
         except Exception as e:
             logger.error(f"ERRO ao buscar projetos para '{service_slug}': {e}")
             flash("Ocorreu um erro ao carregar os projetos relacionados.", "danger")
@@ -269,6 +335,44 @@ def service_detail_page(service_category_slug, service_slug):
                            category=service_category_slug,
                            service_details=service_details_data, # Renomeado de subtopic_details
                            related_projects=related_projects) # Renomeado de products
+
+# --- NOVA ROTA PARA PÁGINA DE FOTOS DO PROJETO ---
+@app.route('/<string:service_category_slug>/<string:service_slug>/fotos')
+def project_photos_page(service_category_slug, service_slug):
+    logger.debug(f"Acessando project_photos_page com category_slug: {service_category_slug}, service_slug: {service_slug}")
+    
+    category_data = SERVICE_ROUTES_MAP.get(service_category_slug)
+    if not category_data or service_slug not in category_data['services']:
+        logger.warning(f"Projeto não encontrado para fotos: category_slug='{service_category_slug}', service_slug='{service_slug}'")
+        flash('Página de fotos do projeto não encontrada.', 'warning')
+        return redirect(url_for('home'))
+
+    project_title = category_data['services'][service_slug]
+    project_photos = [] # Lista para armazenar as URLs das fotos
+
+    if db:
+        try:
+            # Busca o documento de fotos para o projeto
+            # O ID do documento na coleção 'project_images' é o service_slug
+            photos_doc = db.collection('project_images').document(service_slug).get()
+            if photos_doc.exists:
+                photos_data = photos_doc.to_dict()
+                # Assumindo que o documento tem um campo 'image_urls' que é um array de strings (URLs públicas)
+                project_photos = photos_data.get('image_urls', [])
+                logger.debug(f"Fotos encontradas para '{service_slug}': {len(project_photos)} imagens.")
+            else:
+                logger.warning(f"Documento de fotos não encontrado para service_slug: {service_slug} na coleção 'project_images'.")
+            
+        except Exception as e:
+            logger.error(f"Erro ao buscar fotos do projeto '{service_slug}': {e}")
+            flash("Ocorreu um erro ao carregar as fotos do projeto.", "danger")
+
+    return render_template('project_photos.html', 
+                           content_title=project_title,
+                           category=service_category_slug,
+                           service_slug=service_slug,
+                           project_photos=project_photos)
+
 
 # --- ROTAS DE AUTENTICAÇÃO ---
 @app.route('/login', methods=['GET', 'POST'])
@@ -371,11 +475,16 @@ def add_service():
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         description = request.form.get('description', '').strip()
-        image = request.form.get('image', '').strip()
-        service_slug = request.form.get('service_slug', '').strip() # O subtópico agora é o service_slug
-        
+        # image = request.form.get('image', '').strip() # REMOVIDO: Agora é um ficheiro
+        service_slug = request.form.get('service_slug', '').strip()
+        image_file = request.files.get('image_file') # NOVO: Obtém o ficheiro da imagem
+
         if not all([name, description, service_slug]):
             flash('Por favor, preencha todos os campos obrigatórios.', 'warning')
+            return redirect(url_for('admin_services'))
+        
+        if not image_file or image_file.filename == '':
+            flash('Por favor, selecione um ficheiro de imagem para o serviço.', 'warning')
             return redirect(url_for('admin_services'))
 
         services_ref = get_services_collection_ref()
@@ -392,6 +501,13 @@ def add_service():
         
         if not found_category_slug:
             flash('Erro: service_slug não corresponde a nenhuma categoria conhecida.', 'danger')
+            logger.error(f"Erro ao adicionar serviço: service_slug '{service_slug}' não corresponde a nenhuma categoria conhecida.")
+            return redirect(url_for('admin_services'))
+
+        # NOVO: Carrega a imagem para o Firebase Storage
+        image_url = upload_image_to_firebase_storage(image_file)
+        if not image_url:
+            flash('Erro ao carregar a imagem para o armazenamento.', 'danger')
             return redirect(url_for('admin_services'))
 
         try:
@@ -399,12 +515,13 @@ def add_service():
             services_ref.add({
                 'name': name,
                 'description': description,
-                'image': image if image else 'placeholder_default.jpg', # Imagem padrão se não for fornecida
+                'image_url': image_url, # NOVO: Guarda a URL da imagem do Storage
                 'service_slug': service_slug,
                 'category_slug': found_category_slug, # Adiciona a category_slug
                 'created_at': firestore.SERVER_TIMESTAMP
             })
             flash('Serviço adicionado com sucesso!', 'success')
+            logger.info(f"Serviço '{name}' adicionado com sucesso. Slug: {service_slug}, Categoria: {found_category_slug}")
         except Exception as e:
             flash(f'Erro ao adicionar serviço: {e}', 'danger')
             logger.error(f"Erro ao adicionar serviço: {e}")
@@ -422,8 +539,10 @@ def edit_service(service_id):
         if service_doc.exists:
             editing_service = service_doc.to_dict()
             editing_service['id'] = service_doc.id
+            logger.debug(f"Carregando serviço para edição: {editing_service}")
         else:
             flash('Serviço não encontrado para edição.', 'danger')
+            logger.warning(f"Serviço com ID '{service_id}' não encontrado para edição.")
             return redirect(url_for('admin_services'))
     except Exception as e:
         flash(f'Erro ao buscar serviço para edição: {e}', 'danger')
@@ -433,8 +552,9 @@ def edit_service(service_id):
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         description = request.form.get('description', '').strip()
-        image = request.form.get('image', '').strip()
+        # image = request.form.get('image', '').strip() # REMOVIDO
         service_slug = request.form.get('service_slug', '').strip()
+        image_file = request.files.get('image_file') # NOVO: Obtém o ficheiro da imagem
         
         if not all([name, description, service_slug]):
             flash('Por favor, preencha todos os campos obrigatórios.', 'warning')
@@ -449,21 +569,32 @@ def edit_service(service_id):
 
         if not found_category_slug:
             flash('Erro: service_slug não corresponde a nenhuma categoria conhecida.', 'danger')
+            logger.error(f"Erro ao editar serviço: service_slug '{service_slug}' não corresponde a nenhuma categoria conhecida.")
             return redirect(url_for('edit_service', service_id=service_id))
 
+        update_data = {
+            'name': name,
+            'description': description,
+            'service_slug': service_slug,
+            'category_slug': found_category_slug # Atualiza a category_slug
+        }
+
+        # NOVO: Se um novo ficheiro de imagem for fornecido, faz o upload e atualiza a URL
+        if image_file and image_file.filename != '':
+            image_url = upload_image_to_firebase_storage(image_file)
+            if not image_url:
+                flash('Erro ao carregar a nova imagem para o armazenamento.', 'danger')
+                return redirect(url_for('edit_service', service_id=service_id))
+            update_data['image_url'] = image_url # Atualiza a URL da imagem
+
         try:
-            service_doc_ref.update({
-                'name': name,
-                'description': description,
-                'image': image if image else 'placeholder_default.jpg',
-                'service_slug': service_slug,
-                'category_slug': found_category_slug # Atualiza a category_slug
-            })
+            service_doc_ref.update(update_data)
             flash('Serviço atualizado com sucesso!', 'success')
+            logger.info(f"Serviço '{name}' (ID: {service_id}) atualizado com sucesso. Slug: {service_slug}, Categoria: {found_category_slug}")
             return redirect(url_for('admin_services'))
         except Exception as e:
             flash(f'Erro ao atualizar serviço: {e}', 'danger')
-            logger.error(f"Erro ao atualizar serviço: {e}")
+            logger.error(f"Erro ao atualizar serviço (ID: {service_id}): {e}")
             return redirect(url_for('edit_service', service_id=service_id))
 
     # Coleta todos os slugs de serviços para o dropdown no formulário
@@ -487,11 +618,18 @@ def delete_service(service_id):
         return redirect(url_for('admin_services'))
 
     try:
+        # Opcional: Adicionar lógica para apagar a imagem do Storage aqui
+        # if 'image_url' in service_data:
+        #     bucket = storage.bucket()
+        #     blob = bucket.blob(filename_from_url(service_data['image_url']))
+        #     blob.delete()
+
         services_ref.document(service_id).delete()
         flash('Serviço excluído com sucesso!', 'success')
+        logger.info(f"Serviço com ID '{service_id}' excluído com sucesso.")
     except Exception as e:
         flash(f'Erro ao excluir serviço: {e}', 'danger')
-        logger.error(f"Erro ao excluir serviço: {e}")
+        logger.error(f"Erro ao excluir serviço (ID: {service_id}): {e}")
     return redirect(url_for('admin_services'))
 
 # --- Rota de API para Sugestões de Pesquisa ---

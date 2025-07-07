@@ -1,84 +1,96 @@
 {% extends "base.html" %}
 
+{% block title %}Nosso Portfólio - Sua Empresa de Construção e Terceirização{% endblock %}
+
 {% block content %}
-<section class="portfolio-intro py-16 bg-gradient-to-r from-blue-700 to-blue-900 text-white text-center rounded-lg mx-auto max-w-6xl shadow-lg">
-    <div class="container mx-auto px-4">
-        <h1 class="text-4xl md:text-5xl font-extrabold mb-4">Nossos Projetos de Sucesso</h1>
-        <p class="text-lg md:text-xl mb-8">
+<section class="relative py-20 md:py-28 bg-gradient-to-br from-blue-700 to-blue-900 text-white text-center overflow-hidden shadow-2xl">
+    <div class="absolute inset-0 z-0 opacity-10" style="background-image: url('{{ url_for('static', filename='images/fundo_construcao.jpg') }}'); background-size: cover; background-position: center;"></div>
+    <div class="container mx-auto px-6 relative z-10">
+        <h1 class="text-4xl md:text-6xl font-extrabold mb-4 leading-tight animate-fade-in-up">Nossos Projetos de Sucesso</h1>
+        <p class="text-lg md:text-xl mb-10 max-w-3xl mx-auto opacity-90 animate-fade-in-up delay-200">
             Confira a qualidade e a versatilidade dos nossos serviços através de projetos já concluídos.
         </p>
     </div>
 </section>
 
-<section class="portfolio-grid py-16 bg-white rounded-lg mx-auto max-w-6xl mt-8 shadow-lg">
-    <div class="container mx-auto px-4">
-        <h2 class="text-3xl font-bold text-blue-800 text-center mb-10">Projetos Realizados</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <!-- Projeto 1 -->
-            <div class="portfolio-card bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                <img src="https://placehold.co/600x400/ADD8E6/000000?text=Projeto+Residencial" alt="Projeto Residencial" class="w-full h-48 object-cover">
-                <div class="p-6">
-                    <h3 class="text-xl font-semibold text-blue-700 mb-2">Construção Residencial - [Cidade/Bairro]</h3>
-                    <p class="text-gray-600 text-sm mb-4">
-                        Terceirização completa de pedreiros, eletricistas e pintores para uma residência unifamiliar.
-                    </p>
-                    <a href="#" class="text-orange-500 hover:text-orange-600 font-semibold transition-colors duration-300">Ver Detalhes &rarr;</a>
+<section class="portfolio-grid py-16 bg-gray-50 rounded-lg mx-auto max-w-7xl mt-8 shadow-lg">
+    <div class="container mx-auto px-6">
+        <h2 class="text-3xl md:text-4xl font-bold text-blue-800 text-center mb-12">Projetos Realizados</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {% if projects %}
+                {% for project in projects %}
+                <div class="group portfolio-card bg-white rounded-xl shadow-md overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer">
+                    <div class="relative w-full h-48 overflow-hidden">
+                        <img src="{{ url_for('static', filename='images/' + project.image if project.image else 'placeholder_default.jpg') }}" 
+                             alt="{{ project.name }}" 
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                        <div class="absolute inset-0 bg-blue-800 bg-opacity-70 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                            <a href="{{ url_for('project_photos_page', service_category_slug=project.category_slug, service_slug=project.service_slug) }}" 
+                               class="px-6 py-3 bg-orange-500 text-white font-semibold rounded-full shadow-lg transform translate-y-4 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 hover:bg-orange-600">
+                                Ver Fotos &rarr;
+                            </a>
+                        </div>
+                    </div>
+                    <div class="p-6 text-center">
+                        <h3 class="text-xl font-semibold text-blue-700 mb-2">{{ project.name }}</h3>
+                        <p class="text-gray-600 text-sm mb-4">
+                            {{ project.description | truncate(100, True, '...') }}
+                        </p>
+                        <!-- Botão "Ver Projeto" para a página de detalhes do serviço -->
+                        <a href="{{ url_for('service_detail_page', service_category_slug=project.category_slug, service_slug=project.service_slug) }}" 
+                           class="text-blue-500 hover:text-blue-600 font-semibold transition-colors duration-300 mt-2 block">
+                           Ver Projeto &rarr; {# Texto do botão atualizado #}
+                        </a>
+                    </div>
                 </div>
-            </div>
-            <!-- Projeto 2 -->
-            <div class="portfolio-card bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                <img src="https://placehold.co/600x400/ADD8E6/000000?text=Reforma+Comercial" alt="Reforma Comercial" class="w-full h-48 object-cover">
-                <div class="p-6">
-                    <h3 class="text-xl font-semibold text-blue-700 mb-2">Reforma de Escritório - [Nome da Empresa]</h3>
-                    <p class="text-gray-600 text-sm mb-4">
-                        Serviços de gesso, elétrica e pintura para modernização de espaço comercial.
-                    </p>
-                    <a href="#" class="text-orange-500 hover:text-orange-600 font-semibold transition-colors duration-300">Ver Detalhes &rarr;</a>
+                {% endfor %}
+            {% else %}
+                <div class="col-span-full text-center py-12 bg-white rounded-lg shadow-md">
+                    <p class="text-gray-600 text-lg">Nenhum projeto de portfólio encontrado. Adicione projetos através do painel de administração!</p>
+                    <a href="{{ url_for('admin_services') }}" class="mt-6 inline-block px-8 py-3 bg-blue-600 text-white font-semibold rounded-full shadow-md hover:bg-blue-700 transition duration-300">
+                        Ir para Admin de Serviços
+                    </a>
                 </div>
-            </div>
-            <!-- Projeto 3 -->
-            <div class="portfolio-card bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                <img src="https://placehold.co/600x400/ADD8E6/000000?text=Instalacao+Hidraulica" alt="Instalação Hidráulica" class="w-full h-48 object-cover">
-                <div class="p-6">
-                    <h3 class="text-xl font-semibold text-blue-700 mb-2">Instalação Hidráulica Predial - [Condomínio]</h3>
-                    <p class="text-gray-600 text-sm mb-4">
-                        Equipe de encanadores para instalação completa de sistema hidráulico em novo edifício.
-                    </p>
-                    <a href="#" class="text-orange-500 hover:text-orange-600 font-semibold transition-colors duration-300">Ver Detalhes &rarr;</a>
-                </div>
-            </div>
-            <!-- Adicione mais projetos aqui. Use placehold.co para imagens temporárias. -->
-            <div class="portfolio-card bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                <img src="https://placehold.co/600x400/ADD8E6/000000?text=Estrutura+Armacao" alt="Estrutura Armação" class="w-full h-48 object-cover">
-                <div class="p-6">
-                    <h3 class="text-xl font-semibold text-blue-700 mb-2">Reforço Estrutural - [Galpão Industrial]</h3>
-                    <p class="text-gray-600 text-sm mb-4">
-                        Serviços de armação para reforço de estrutura em galpão industrial.
-                    </p>
-                    <a href="#" class="text-orange-500 hover:text-orange-600 font-semibold transition-colors duration-300">Ver Detalhes &rarr;</a>
-                </div>
-            </div>
-            <div class="portfolio-card bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                <img src="https://placehold.co/600x400/ADD8E6/000000?text=Pintura+Externa" alt="Pintura Externa" class="w-full h-48 object-cover">
-                <div class="p-6">
-                    <h3 class="text-xl font-semibold text-blue-700 mb-2">Pintura Externa - [Edifício Comercial]</h3>
-                    <p class="text-gray-600 text-sm mb-4">
-                        Pintura completa da fachada de um edifício comercial de grande porte.
-                    </p>
-                    <a href="#" class="text-orange-500 hover:text-orange-600 font-semibold transition-colors duration-300">Ver Detalhes &rarr;</a>
-                </div>
-            </div>
-            <div class="portfolio-card bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                <img src="https://placehold.co/600x400/ADD8E6/000000?text=Nova+Construcao" alt="Nova Construção" class="w-full h-48 object-cover">
-                <div class="p-6">
-                    <h3 class="text-xl font-semibold text-blue-700 mb-2">Nova Construção - [Condomínio Residencial]</h3>
-                    <p class="text-gray-600 text-sm mb-4">
-                        Colaboração em diversas fases da construção de um novo condomínio.
-                    </p>
-                    <a href="#" class="text-orange-500 hover:text-orange-600 font-semibold transition-colors duration-300">Ver Detalhes &rarr;</a>
-                </div>
-            </div>
+            {% endif %}
         </div>
     </div>
 </section>
+
+<section class="call-to-action py-16 bg-blue-600 text-white text-center mt-12 shadow-inner">
+    <div class="container mx-auto px-6">
+        <h2 class="text-3xl md:text-4xl font-bold mb-6">Pronto para Iniciar Seu Próximo Projeto?</h2>
+        <p class="text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-90">
+            Entre em contato com nossa equipe especializada e solicite um orçamento personalizado para suas necessidades de construção e terceirização.
+        </p>
+        <a href="{{ url_for('contact') }}" class="btn bg-orange-500 text-white px-10 py-4 rounded-full text-lg font-semibold shadow-xl hover:bg-orange-600 transform hover:scale-105 transition-all duration-300">
+            Solicitar Orçamento Agora
+        </a>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block head_extra %}
+<style>
+    /* Animações CSS para um toque extra */
+    @keyframes fadeInUptoTop {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in-up {
+        animation: fadeInUptoTop 0.8s ease-out forwards;
+        opacity: 0; /* Começa invisível */
+    }
+
+    .delay-200 { animation-delay: 0.2s; }
+    .delay-400 { animation-delay: 0.4s; }
+    .delay-600 { animation-delay: 0.6s; }
+</style>
 {% endblock %}

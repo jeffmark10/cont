@@ -51,7 +51,8 @@
         <section class="bg-white p-8 rounded-xl shadow-lg mb-8">
             <h2 class="text-3xl font-semibold text-gray-800 mb-6">{{ 'Editar Serviço' if editing_service else 'Adicionar Novo Serviço' }}</h2> {# Título atualizado #}
             
-            <form action="{{ url_for('edit_service', service_id=editing_service.id) if editing_service else url_for('add_service') }}" method="POST" class="space-y-6"> {# Ações atualizadas #}
+            <!-- Adicionado enctype="multipart/form-data" para upload de ficheiros -->
+            <form action="{{ url_for('edit_service', service_id=editing_service.id) if editing_service else url_for('add_service') }}" method="POST" class="space-y-6" enctype="multipart/form-data"> {# Ações atualizadas #}
                 
                 <!-- Nome do Serviço/Projeto -->
                 <div>
@@ -64,17 +65,26 @@
                 <div>
                     <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
                     <textarea id="description" name="description" rows="4" required
-                              class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-base resize-y">{{ editing_service.description if editing_service else '' }}</textarea>
+                               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-base resize-y">{{ editing_service.description if editing_service else '' }}</textarea>
                 </div>
  
-                <!-- URL da Imagem -->
+                <!-- Campo de Upload de Imagem (NOVO) -->
                 <div>
-                    <label for="image" class="block text-sm font-medium text-gray-700 mb-1">URL da Imagem</label>
-                    <input type="text" id="image" name="image" value="{{ editing_service.image if editing_service else '' }}"
-                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-base" placeholder="Ex: projeto.jpg ou https://exemplo.com/projeto.png"> {# Placeholder atualizado #}
+                    <label for="image_file" class="block text-sm font-medium text-gray-700 mb-1">Ficheiro de Imagem</label>
+                    <input type="file" id="image_file" name="image_file" accept="image/*"
+                           class="mt-1 block w-full text-sm text-gray-500
+                           file:mr-4 file:py-2 file:px-4
+                           file:rounded-full file:border-0
+                           file:text-sm file:font-semibold
+                           file:bg-blue-50 file:text-blue-700
+                           hover:file:bg-blue-100">
+                    {% if editing_service and editing_service.image_url %}
+                        <p class="mt-2 text-sm text-gray-600">Imagem atual: <a href="{{ editing_service.image_url }}" target="_blank" class="text-blue-500 hover:underline">Ver Imagem</a></p>
+                        <input type="hidden" name="existing_image_url" value="{{ editing_service.image_url }}"> {# Para manter a URL se nenhuma nova for enviada #}
+                    {% else %}
+                        <p class="mt-2 text-sm text-gray-600">Nenhuma imagem selecionada. Será usado um placeholder se não enviar.</p>
+                    {% endif %}
                 </div>
- 
-                {# Removido campos de Preço e Estoque, pois não são relevantes para serviços #}
  
                 <!-- Service Slug (Subtópico onde o serviço aparecerá) -->
                 <div>

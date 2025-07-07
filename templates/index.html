@@ -78,7 +78,7 @@
                     <div class="product-image-container">
                         <img src="{{ url_for('static', filename='images/' + service.image) }}" class="card-img-top product-image" alt="{{ service.name }}">
                         <div class="product-image-overlay">
-                            <a href="{{ url_for('service_detail_page', service_category_slug=service.category_slug, service_slug=service.service_slug) }}" class="btn-overlay">Ver Projeto</a> {# Link para a página de detalhes do serviço/projeto #}
+                            <a href="{{ url_for('project_photos_page', service_category_slug=service.category_slug, service_slug=service.service_slug) }}" class="btn-overlay">Ver Fotos</a> {# Link ATUALIZADO para a página de fotos #}
                         </div>
                         {% if service.badge %}
                             <span class="product-badge">{{ service.badge }}</span>
@@ -87,8 +87,9 @@
                     <div class="card-body text-center">
                         <h5 class="card-title product-name">{{ service.name }}</h5>
                         <p class="card-text product-description">{{ service.description }}</p>
-                        <a href="{{ url_for('service_detail_page', service_category_slug=service.category_slug, service_slug=service.service_slug) }}" class="btn btn-success btn-block add-to-cart-btn">
-                            <i class="fas fa-info-circle me-2"></i> Detalhes
+                        <!-- Botão no corpo do cartão agora é "Ver Projeto" e leva para a página de fotos -->
+                        <a href="{{ url_for('project_photos_page', service_category_slug=service.category_slug, service_slug=service.service_slug) }}" class="btn btn-success btn-block add-to-cart-btn">
+                            <i class="fas fa-camera me-2"></i> Ver Projeto
                         </a>
                     </div>
                 </div>

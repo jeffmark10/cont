@@ -8,7 +8,7 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Início</a></li>
-            <li class="breadcrumb-item"><a href="{{ url_for('portfolio') }}">Nosso Portfólio</a></li> {# CORRIGIDO: Link atualizado para 'portfolio' #}
+            <li class="breadcrumb-item"><a href="{{ url_for('services_overview') }}">Nossos Serviços</a></li>
             <li class="breadcrumb-item"><a href="{{ url_for('service_category_overview', service_category_slug=category) }}">{{ SERVICE_ROUTES_MAP[category].display_name }}</a></li> {# Link atualizado #}
             <li class="breadcrumb-item active" aria-current="page">{{ content_title }}</li>
         </ol>
@@ -18,7 +18,7 @@
     <div class="content-layout">
         <div class="content-image-column">
             <!-- A imagem agora é carregada dinamicamente para o serviço/projeto -->
-            <img src="{{ url_for('static', filename='images/' + service_details.get('image_filename', 'placeholder_default.jpg')) }}" 
+            <img src="{{ url_for('static', filename='images/' + service_details.get('image', 'placeholder_default.jpg')) }}" 
                  alt="{{ content_title }}" class="content-image">
         </div>
         <div class="content-text-column">
@@ -26,6 +26,12 @@
             <!-- A descrição agora é carregada dinamicamente (e renderiza HTML) -->
             <div class="description-content">
                 {{ service_details.get('description_html', '<p>Descrição detalhada para este serviço/projeto em breve.</p>') | safe }}
+            </div>
+            <!-- Botão "Ver Projeto" para a página de fotos -->
+            <div class="mt-8 text-center">
+                <a href="{{ url_for('project_photos_page', service_category_slug=category, service_slug=service_slug) }}" class="btn bg-blue-600 text-white px-8 py-3 rounded-full hover:bg-blue-700 transition duration-300">
+                    <i class="fas fa-camera mr-2"></i> Ver Fotos do Projeto
+                </a>
             </div>
         </div>
     </div>
@@ -41,10 +47,10 @@
             {% for project in related_projects %} {# Loop sobre related_projects #}
             <div class="product-card"> {# Reutilizando product-card para estilo #}
                 <div class="product-image-container">
-                    <img src="{{ url_for('static', filename='images/' + project.image if project.image else 'images/placeholder_product.jpg') }}" class="product-image" alt="{{ project.name }}">
+                    <img src="{{ url_for('static', filename='images/' + project.image if project.image else 'images/placeholder_project.jpg') }}" class="product-image" alt="{{ project.name }}">
                     <div class="product-image-overlay">
                         {# O link aqui pode ser para a mesma página de detalhes do serviço, ou para uma página específica do projeto se houver #}
-                        <a href="{{ url_for('service_detail_page', service_category_slug=project.service_slug, service_slug=project.service_slug) }}" class="btn-overlay">Ver Detalhes</a>
+                        <a href="{{ url_for('service_detail_page', service_category_slug=category, service_slug=project.service_slug) }}" class="btn-overlay">Ver Detalhes</a>
                     </div>
                     {% if project.badge %} {# Pode ser usado para "Projeto Concluído", "Em Andamento", etc. #}
                         <span class="product-badge">{{ project.badge }}</span>
@@ -54,7 +60,7 @@
                     <h5 class="product-name">{{ project.name }}</h5>
                     <p class="product-description">{{ project.description }}</p>
                     {# Removido o preço e o botão de adicionar ao carrinho #}
-                    <a href="{{ url_for('service_detail_page', service_category_slug=project.service_slug, service_slug=project.service_slug) }}" class="add-to-cart-btn">Ver Projeto</a>
+                    <a href="{{ url_for('service_detail_page', service_category_slug=category, service_slug=project.service_slug) }}" class="add-to-cart-btn">Ver Projeto</a>
                 </div>
             </div>
             {% endfor %}
