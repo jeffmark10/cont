@@ -6,5 +6,5 @@ class Config:
     DEBUG = True # Mude para False em produção
     APP_ID = os.environ.get('FIREBASE_APP_ID', 'construcao-terceirizacao-app') # ID do seu projeto Firebase, atualizado para o novo tema
     
-    # NOVO: Firebase Storage Bucket Name
-    FIREBASE_STORAGE_BUCKET = os.environ.get('FIREBASE_STORAGE_BUCKET', 'seu-projeto-id.appspot.com') # SUBSTITUA PELO NOME DO SEU BUCKET!
+    # FIREBASE_STORAGE_BUCKET foi removido, pois agora usamos armazenamento local para as fotos de serviço.
+

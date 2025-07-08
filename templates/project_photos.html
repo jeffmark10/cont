@@ -18,11 +18,11 @@
 
     {% if project_photos %}
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-12">
-            {% for photo_url in project_photos %}
+            {% for photo_path in project_photos %} {# Renomeado para photo_path #}
             <div class="photo-card bg-white rounded-lg shadow-md overflow-hidden transform transition-transform duration-300 hover:scale-105">
-                <!-- Usa photo_url diretamente (já é a URL completa do Storage) -->
-                <img src="{{ photo_url }}" 
-                     alt="Foto do Projeto {{ content_title }}" 
+                <!-- Usa photo_path diretamente (já é o caminho relativo) -->
+                <img src="{{ url_for('static', filename='images/' + photo_path) }}" 
+                     alt="" 
                      class="w-full h-48 object-cover">
                 <div class="p-4 text-center">
                     <p class="text-gray-700 text-sm">Visualização de {{ content_title }}</p>

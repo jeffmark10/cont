@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Perfil - Sua Empresa de Construção</title> {# Título atualizado #}
+    <title>Meu Perfil - Sua Empresa de Construção</title>
     <!-- Inclui o Tailwind CSS CDN para estilização rápida e responsiva -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -42,11 +42,11 @@
                                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                                 </svg>
                             </button>
-
+ 
                             <!-- Menu Suspenso (Dropdown) -->
                             <div id="userDropdownMenu" class="dropdown-menu absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 hidden">
                                 <a href="{{ url_for('meu_perfil') }}" class="block px-4 py-2 text-gray-800 hover:bg-gray-100 rounded-lg">Meu Perfil</a>
-                                <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100 rounded-lg">Meus Projetos/Solicitações</a> {# Placeholder para rota de projetos/solicitações #}
+                                <a href="{{ url_for('my_projects') }}" class="block px-4 py-2 text-gray-800 hover:bg-gray-100 rounded-lg">Meus Projetos/Solicitações</a> {# Link atualizado #}
                                 <div class="border-t border-gray-100 my-1"></div>
                                 <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg">Sair</a>
                             </div>
@@ -58,7 +58,7 @@
             </nav>
         </div>
     </header>
-
+ 
     <main class="container mx-auto p-6 flex-grow">
         <!-- Área para Mensagens Flash do Flask -->
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -72,21 +72,22 @@
                 </div>
             {% endif %}
         {% endwith %}
-
+ 
         <div class="bg-white p-8 rounded-xl shadow-lg mb-8">
             <h2 class="text-3xl font-semibold text-gray-800 mb-6">Informações do Usuário</h2>
             {% if g.user %}
                 <p class="text-gray-700 mb-2"><span class="font-semibold">Nome:</span> {{ g.user.name }}</p>
                 <p class="text-gray-700 mb-4"><span class="font-semibold">Email:</span> {{ g.user.email }}</p>
-
+                <p class="text-gray-700 mb-4"><span class="font-semibold">Papel:</span> {{ g.user.role | capitalize }}</p> {# Exibe o papel do usuário #}
+ 
                 <!-- Seção para o botão de admin -->
-                {% if g.user.email == 'jeffersongarcia2013@gmail.com' %} {# Apenas mostra o botão se for o admin #}
+                {% if g.user.get('role') == 'admin' %} {# Condição atualizada para verificar o papel 'admin' #}
                     <div class="mt-6 pt-6 border-t border-gray-200">
                         <h3 class="text-2xl font-semibold text-gray-800 mb-4">Área Administrativa</h3>
-                        <p class="text-gray-600 mb-4">Acesse a seção de administração de serviços para gerenciar seu portfólio.</p> {# Texto atualizado #}
+                        <p class="text-gray-600 mb-4">Acesse a seção de administração de serviços para gerenciar seu portfólio.</p>
                         
                         <!-- Botão para a página de administração de serviços -->
-                        <a href="{{ url_for('admin_services') }}" {# Link atualizado #}
+                        <a href="{{ url_for('admin_services') }}"
                            class="inline-flex items-center px-6 py-3 border border-transparent text-base font-semibold rounded-lg shadow-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out">
                             Ir para Admin de Serviços
                         </a>
@@ -95,32 +96,32 @@
                 {% else %}
                     <p class="text-gray-600 mt-6 pt-6 border-t border-gray-200">Você não possui acesso às ferramentas de administração.</p>
                 {% endif %}
-
+ 
             {% else %}
                 <p class="text-gray-600">Nenhuma informação de usuário disponível. Por favor, faça login.</p>
             {% endif %}
         </div>
     </main>
-
+ 
     <!-- Rodapé (exemplo simples) -->
     <footer class="bg-gray-800 text-white text-center p-4 mt-8 shadow-inner">
         <div class="container mx-auto">
-            <p>&copy; {{ year }} Sua Empresa de Construção. Todos os direitos reservados.</p> {# Texto atualizado #}
+            <p>&copy; {{ year }} Sua Empresa de Construção. Todos os direitos reservados.</p>
         </div>
     </footer>
-
+ 
     <script>
         // JavaScript para alternar o menu suspenso
         document.addEventListener('DOMContentLoaded', function() {
             const userMenuButton = document.getElementById('userMenuButton');
             const userDropdownMenu = document.getElementById('userDropdownMenu');
-
+ 
             if (userMenuButton && userDropdownMenu) {
                 userMenuButton.addEventListener('click', function() {
                     userDropdownMenu.classList.toggle('hidden');
                     userDropdownMenu.classList.toggle('active'); // Para transições de estilo
                 });
-
+ 
                 // Fechar o menu se clicar fora dele
                 document.addEventListener('click', function(event) {
                     if (!userMenuButton.contains(event.target) && !userDropdownMenu.contains(event.target)) {

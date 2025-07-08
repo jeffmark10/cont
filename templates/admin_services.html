@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administração de Serviços - Sua Empresa de Construção</title>
+    <!-- Inclui o Tailwind CSS CDN para estilização rápida e responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos personalizados para a fonte Inter, se desejar */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <!-- Cabeçalho (exemplo simples, você pode integrar seu cabeçalho principal aqui) -->
+    <header class="bg-blue-700 text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Admin Serviços</h1>
+            <nav>
+                <ul class="flex space-x-4">
+                    <li><a href="{{ url_for('home') }}" class="hover:underline">Início</a></li>
+                    <li><a href="{{ url_for('admin_services') }}" class="hover:underline">Admin Serviços</a></li>
+                    {% if logged_in_user_first_name %}
+                        <li><span class="font-medium">Olá, {{ logged_in_user_first_name }}!</span></li>
+                        <li><a href="{{ url_for('logout') }}" class="hover:underline">Sair</a></li>
+                    {% else %}
+                        <li><a href="{{ url_for('login') }}" class="hover:underline">Login</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+ 
+    <main class="container mx-auto p-6 flex-grow">
+        <!-- Área para Mensagens Flash do Flask -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-6 space-y-3">
+                    {% for category, message in messages %}
+                        <div class="p-4 rounded-lg text-sm {% if category == 'success' %}bg-green-100 text-green-800{% elif category == 'danger' %}bg-red-100 text-red-800{% elif category == 'warning' %}bg-yellow-100 text-yellow-800{% else %}bg-blue-100 text-blue-800{% endif %} shadow-sm" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+ 
+        <!-- Seção de Adicionar/Editar Serviço/Projeto -->
+        <section class="bg-white p-8 rounded-xl shadow-lg mb-8">
+            <h2 class="text-3xl font-semibold text-gray-800 mb-6">{{ 'Editar Serviço' if editing_service else 'Adicionar Novo Serviço' }}</h2>
+            
+            <!-- Adicionado enctype="multipart/form-data" para upload de ficheiros -->
+            <form action="{{ url_for('edit_service', service_id=editing_service.id) if editing_service else url_for('add_service') }}" method="POST" class="space-y-6" enctype="multipart/form-data">
+                
+                <!-- Nome do Serviço/Projeto -->
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nome do Serviço/Projeto</label>
+                    <input type="text" id="name" name="name" value="{{ editing_service.name if editing_service else '' }}" required
+                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-base">
+                </div>
+ 
+                <!-- Descrição -->
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                    <textarea id="description" name="description" rows="4" required
+                               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-base resize-y">{{ editing_service.description if editing_service else '' }}</textarea>
+                </div>
+ 
+                <!-- Campo de Upload de Imagem (NOVO) -->
+                <div>
+                    <label for="image_file" class="block text-sm font-medium text-gray-700 mb-1">Ficheiro de Imagem Principal (para card de serviço/projeto)</label>
+                    <input type="file" id="image_file" name="image_file" accept="image/*"
+                           class="mt-1 block w-full text-sm text-gray-500
+                           file:mr-4 file:py-2 file:px-4
+                           file:rounded-full file:border-0
+                           file:text-sm file:font-semibold
+                           file:bg-blue-50 file:text-blue-700
+                           hover:file:bg-blue-100">
+                    {% if editing_service and editing_service.image_url %}
+                        <p class="mt-2 text-sm text-gray-600">Imagem atual: <a href="{{ url_for('static', filename='images/' + editing_service.image_url) }}" target="_blank" class="text-blue-500 hover:underline">Ver Imagem</a></p>
+                        <input type="hidden" name="existing_image_url" value="{{ editing_service.image_url }}"> {# Para manter a URL se nenhuma nova for enviada #}
+                    {% else %}
+                        <p class="mt-2 text-sm text-gray-600">Nenhuma imagem selecionada. Será usado um placeholder se não enviar.</p>
+                    {% endif %}
+                </div>
+ 
+                <!-- Service Slug (Subtópico onde o serviço aparecerá) -->
+                <div>
+                    <label for="service_slug" class="block text-sm font-medium text-gray-700 mb-1">Serviço/Subtópico (onde o item aparecerá)</label>
+                    <select id="service_slug" name="service_slug" required
+                            class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-base">
+                        <option value="">Selecione um serviço/subtópico</option>
+                        {% for slug in all_service_slugs %}
+                            <option value="{{ slug }}" {% if editing_service and editing_service.service_slug == slug %}selected{% endif %}>
+                                {{ slug }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+ 
+                <!-- Botões de Ação do Formulário -->
+                <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+                    <button type="submit"
+                            class="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out">
+                        {{ 'Salvar Alterações' if editing_service else 'Adicionar Serviço' }}
+                    </button>
+                    {% if editing_service %}
+                        <a href="{{ url_for('admin_services') }}"
+                           class="w-full sm:w-auto px-6 py-3 text-center bg-gray-300 text-gray-800 font-semibold rounded-lg shadow-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition duration-150 ease-in-out">
+                            Cancelar Edição
+                        </a>
+                    {% endif %}
+                </div>
+            </form>
+        </section>
+ 
+        <!-- Seção de Lista de Serviços/Projetos (visível apenas se não estiver editando) -->
+        {% if not editing_service %}
+            <section class="bg-white p-8 rounded-xl shadow-lg">
+                <h2 class="text-3xl font-semibold text-gray-800 mb-6">Serviços/Projetos Existentes</h2>
+                
+                {% if services %}
+                    <div class="overflow-x-auto rounded-lg shadow">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição (Início)</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtópico/Serviço</th>
+                                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for service in services %}
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ service.id }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ service.name }}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">{{ service.description[:70] }}...</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ service.service_slug }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <a href="{{ url_for('edit_service', service_id=service.id) }}"
+                                               class="text-blue-600 hover:text-blue-900 mr-4">Editar</a>
+                                            <form action="{{ url_for('delete_service', service_id=service.id) }}" method="POST" class="inline-block" onsubmit="return confirm('Tem certeza que deseja excluir o serviço {{ service.name }}? Esta ação é irreversível e também excluirá a imagem associada.');">
+                                                <button type="submit" class="text-red-600 hover:text-red-900 mr-4">Excluir</button>
+                                            </form>
+                                            {# NOVO: Botão para gerenciar fotos adicionais do projeto #}
+                                            <a href="{{ url_for('admin_project_photos', service_slug=service.service_slug) }}" 
+                                               class="text-green-600 hover:text-green-900">Gerenciar Fotos</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-gray-600 text-center py-8">Nenhum serviço/projeto cadastrado ainda. Adicione um acima!</p>
+                {% endif %}
+            </section>
+        {% endif %}
+    </main>
+ 
+    <!-- Rodapé (exemplo simples) -->
+    <footer class="bg-gray-800 text-white text-center p-4 mt-8 shadow-inner">
+        <div class="container mx-auto">
+            <p>&copy; {{ year }} Sua Empresa de Construção. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+</body>
+</html>

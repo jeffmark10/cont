@@ -8,7 +8,7 @@
         <div class="hero-content container"> {# Adicionado container para centralizar conteúdo #}
             <h1>Construindo o Futuro, Hoje.</h1>
             <p>Sua parceira ideal em terceirização de obras, reformas e projetos. Qualidade, eficiência e confiança em cada empreendimento.</p>
-            <a href="{{ url_for('services_overview') }}" class="btn">Nossos Serviços</a> {# Link para a nova página de serviços #}
+            <a href="{{ url_for('service_categories_overview') }}" class="btn">Nossos Serviços</a> {# Link atualizado para a visão geral das categorias de serviços #}
         </div>
     </header>
 
@@ -18,13 +18,13 @@
         <div class="carousel-wrapper container"> {# Adicionado um wrapper para o carrossel #}
             <div class="carousel-container" id="imageCarousel">
                 <div class="carousel-slide">
-                    <img src="{{ url_for('static', filename='images/projeto_edificio_moderno.jpg') }}" alt="Projeto 1: Edifício Moderno">
+                    <img src="{{ url_for('static', filename='images/projeto_edificio_moderno.jpg') }}" alt="">
                 </div>
                 <div class="carousel-slide">
-                    <img src="{{ url_for('static', filename='images/reforma_comercial_interior.jpg') }}" alt="Projeto 2: Reforma Comercial">
+                    <img src="{{ url_for('static', filename='images/reforma_comercial_interior.jpg') }}" alt="">
                 </div>
                 <div class="carousel-slide">
-                    <img src="{{ url_for('static', filename='images/infraestrutura_urbana.jpg') }}" alt="Projeto 3: Infraestrutura Urbana">
+                    <img src="{{ url_for('static', filename='images/infraestrutura_urbana.jpg') }}" alt="">
                 </div>
                 {# Adicione mais slides com suas imagens de projetos aqui #}
             </div>
@@ -76,7 +76,8 @@
                 {% for service in featured_services %} {# Loop sobre featured_services #}
                 <div class="product-card"> {# Removido col-md-4 e mb-4 para usar o grid diretamente #}
                     <div class="product-image-container">
-                        <img src="{{ url_for('static', filename='images/' + service.image) }}" class="card-img-top product-image" alt="{{ service.name }}">
+                        {# Usa image_url se disponível, caso contrário, tenta 'image' para compatibilidade com dados antigos #}
+                        <img src="{{ url_for('static', filename='images/' + service.image_url) if service.image_url else url_for('static', filename='images/placeholder_default.jpg') }}" class="card-img-top product-image" alt="">
                         <div class="product-image-overlay">
                             <a href="{{ url_for('project_photos_page', service_category_slug=service.category_slug, service_slug=service.service_slug) }}" class="btn-overlay">Ver Fotos</a> {# Link ATUALIZADO para a página de fotos #}
                         </div>

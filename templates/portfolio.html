@@ -21,8 +21,9 @@
                 {% for project in projects %}
                 <div class="group portfolio-card bg-white rounded-xl shadow-md overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer">
                     <div class="relative w-full h-48 overflow-hidden">
-                        <img src="{{ url_for('static', filename='images/' + project.image if project.image else 'placeholder_default.jpg') }}" 
-                             alt="{{ project.name }}" 
+                        {# Usa image_url se disponível, caso contrário, tenta 'image' para compatibilidade com dados antigos #}
+                        <img src="{{ url_for('static', filename='images/' + project.image_url) if project.image_url else url_for('static', filename='images/placeholder_default.jpg') }}" 
+                             alt="" 
                              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                         <div class="absolute inset-0 bg-blue-800 bg-opacity-70 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                             <a href="{{ url_for('project_photos_page', service_category_slug=project.category_slug, service_slug=project.service_slug) }}" 
@@ -39,7 +40,7 @@
                         <!-- Botão "Ver Projeto" para a página de detalhes do serviço -->
                         <a href="{{ url_for('service_detail_page', service_category_slug=project.category_slug, service_slug=project.service_slug) }}" 
                            class="text-blue-500 hover:text-blue-600 font-semibold transition-colors duration-300 mt-2 block">
-                           Ver Projeto &rarr; {# Texto do botão atualizado #}
+                           Ver Detalhes do Projeto &rarr; {# Texto do botão atualizado #}
                         </a>
                     </div>
                 </div>

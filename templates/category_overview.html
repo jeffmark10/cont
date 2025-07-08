@@ -1,20 +1,20 @@
 {# templates/category_overview.html #}
 {% extends 'base.html' %}
-
+ 
 {% block title %} {{ category_data.display_name }} - Sua Empresa de Construção e Terceirização{% endblock %} {# Atualizado para category_data.display_name #}
-
+ 
 {% block content %}
 <div class="container page-container"> {# Adicionado page-container para consistência de padding #}
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Início</a></li>
-            <li class="breadcrumb-item"><a href="{{ url_for('services_overview') }}">Nossos Serviços</a></li> {# Link para a página geral de serviços #}
+            <li class="breadcrumb-item"><a href="{{ url_for('service_categories_overview') }}">Nossos Serviços</a></li> {# Link CORRIGIDO para a página geral de categorias de serviços #}
             <li class="breadcrumb-item active" aria-current="page">{{ category_data.display_name }}</li> {# Atualizado para category_data.display_name #}
         </ol>
     </nav>
-
+ 
     <h1 class="section-title">{{ category_data.display_name }}</h1> {# Usando section-title para consistência de estilo #}
-
+ 
     <div class="card p-4 shadow-sm mb-8"> {# Adicionado mb-8 para margem inferior #}
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">Explore nossa categoria de {{ category_data.display_name }}</h2> {# Título mais específico #}
         <p class="text-gray-700 mb-6">Aqui você encontra uma vasta gama de soluções e projetos que oferecemos dentro desta área da construção. Navegue pelos nossos serviços específicos para encontrar informações detalhadas e exemplos de trabalhos realizados.</p>
@@ -30,7 +30,7 @@
             {% endfor %}
         </ul>
     </div>
-
+ 
     {# Você pode adicionar mais seções aqui, como projetos em destaque da categoria, etc. #}
     <section class="call-to-action mt-8"> {# Adicionado margem superior #}
         <div class="cta-content">
