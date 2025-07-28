@@ -1,0 +1,12 @@
+asgiref==3.9.1
+Django==5.0.7
+django-environ==0.12.0
+pillow==11.3.0
+psycopg2-binary==2.9.10
+python-dotenv==1.1.1
+sqlparse==0.5.3
+tzdata==2025.2
+gunicorn==20.1.0
+cloudinary==1.40.0
+django-cloudinary-storage==0.3.0
+whitenoise==6.7.0

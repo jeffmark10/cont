@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="bg-white rounded-2xl shadow-xl p-8 lg:p-12 max-w-2xl mx-auto animate-fade-in">
+        <h1 class="text-4xl lg:text-5xl font-bold text-gray-700 mb-8 text-center leading-tight">Adicionar Novo Produto</h1>
+        
+        <form method="post" enctype="multipart/form-data" class="space-y-6" aria-label="Formulário para adicionar novo produto">
+            {% csrf_token %} {# Token de segurança obrigatório no Django para formulários POST #}
+            
+            {% for field in form %}
+                <div class="mb-4">
+                    <label for="{{ field.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">{{ field.label }}:</label>
+                    {{ field }} {# Renderiza o campo do formulário (input, textarea, select, etc.) #}
+                    {% if field.help_text %}
+                        <p class="text-gray-500 text-xs italic mt-1" id="{{ field.id_for_label }}-help">{{ field.help_text }}</p>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <p class="text-red-500 text-xs italic mt-1" role="alert">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            
+            <div class="flex items-center justify-center">
+                <button type="submit" class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 px-6 rounded-full focus:outline-none focus:shadow-outline transition duration-300 transform hover:-translate-y-1 shadow-lg" aria-label="Salvar e adicionar produto">
+                    Adicionar Produto
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="bg-white rounded-2xl shadow-xl p-8 lg:p-12 max-w-2xl mx-auto animate-fade-in">
+        <h1 class="text-4xl lg:text-5xl font-bold text-gray-700 mb-8 text-center leading-tight">Editar Produto: {{ product.name }}</h1>
+        
+        <form method="post" enctype="multipart/form-data" class="space-y-6" aria-label="Formulário para editar produto {{ product.name }}">
+            {% csrf_token %}
+            
+            {% for field in form %}
+                <div class="mb-4">
+                    <label for="{{ field.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">{{ field.label }}:</label>
+                    {# Se o campo for a imagem e o produto já tiver uma imagem, exibe a imagem atual #}
+                    {% if field.name == 'image' and product.image %}
+                        <div class="mb-2">
+                            <img src="{{ product.image.url }}" alt="Imagem Atual do produto {{ product.name }}" class="w-32 h-32 object-cover rounded-md border border-stone-200">
+                            <p class="text-xs text-gray-500 mt-1">Imagem atual</p>
+                        </div>
+                    {% endif %}
+                    {{ field }} {# Renderiza o campo do formulário (já preenchido com os dados do produto) #}
+                    {% if field.help_text %}
+                        <p class="text-gray-500 text-xs italic mt-1" id="{{ field.id_for_label }}-help">{{ field.help_text }}</p>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <p class="text-red-500 text-xs italic mt-1" role="alert">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            
+            <div class="flex items-center justify-center gap-4">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full focus:outline-none focus:shadow-outline transition duration-300 transform hover:-translate-y-1 shadow-lg" aria-label="Salvar alterações do produto">
+                    Salvar Alterações
+                </button>
+                <a href="{% url 'store:my_products' %}" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-full focus:outline-none focus:shadow-outline transition duration-300 transform hover:-translate-y-1 shadow-lg" role="button" aria-label="Cancelar edição e voltar">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+{% endblock %}

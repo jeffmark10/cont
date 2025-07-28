@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="bg-white rounded-2xl shadow-xl p-8 lg:p-12 animate-fade-in">
+        <h1 class="text-4xl lg:text-5xl font-bold text-gray-700 mb-8 text-center leading-tight">Seu Carrinho de Compras</h1>
+        
+        {% if cart_items %}
+            <div class="overflow-x-auto" role="region" aria-labelledby="cart-heading">
+                <h2 id="cart-heading" class="sr-only">Itens no Carrinho</h2>
+                <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm" role="table" aria-live="polite" aria-atomic="true">
+                    <thead>
+                        <tr class="bg-pink-50 text-pink-700 uppercase text-sm leading-normal">
+                            <th class="py-3 px-6 text-left" scope="col">Produto</th>
+                            <th class="py-3 px-6 text-center" scope="col">Preço</th>
+                            <th class="py-3 px-6 text-center" scope="col">Quantidade</th>
+                            <th class="py-3 px-6 text-center" scope="col">Total</th>
+                            <th class="py-3 px-6 text-center" scope="col">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-600 text-sm font-light" id="cart-items-body">
+                        {% for item in cart_items %}
+                            <tr class="border-b border-gray-200 hover:bg-gray-50" id="cart-item-{{ item.id }}">
+                                <td class="py-3 px-6 text-left whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        {% if item.product.image %}
+                                            <img class="w-12 h-12 rounded-full object-cover mr-4" src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                                        {% else %}
+                                            <img class="w-12 h-12 rounded-full object-cover mr-4" src="https://placehold.co/50x50/cccccc/ffffff?text=Img" alt="Sem Imagem">
+                                        {% endif %}
+                                        <span id="product-name-{{ item.id }}">{{ item.product.name }}</span>
+                                    </div>
+                                    {% if item.quantity > item.product.stock %}
+                                        <p class="text-red-500 text-xs mt-1" role="alert">Atenção: A quantidade excede o estoque disponível ({{ item.product.stock }}).</p>
+                                    {% endif %}
+                                    {# NOVO: Exibir o código de rastreamento do produto no carrinho #}
+                                    {% if item.product.tracking_code %}
+                                        <p class="text-xs text-gray-500 mt-1">Cód. Rastreamento: <span class="font-semibold">{{ item.product.tracking_code }}</span></p>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 px-6 text-center" aria-labelledby="product-name-{{ item.id }}">R$ <span class="product-price">{{ item.product.price|floatformat:2 }}</span></td>
+                                <td class="py-3 px-6 text-center">
+                                    <form class="update-cart-form" data-item-id="{{ item.id }}" action="{% url 'store:update_cart_item' item.id %}" method="POST" aria-label="Atualizar quantidade de {{ item.product.name }}">
+                                        {% csrf_token %}
+                                        <div class="flex items-center justify-center gap-2">
+                                            <label for="quantity-{{ item.id }}" class="sr-only">Quantidade para {{ item.product.name }}</label>
+                                            <input type="number" id="quantity-{{ item.id }}" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}" class="w-16 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-pink-500" {% if item.product.stock == 0 %}disabled aria-disabled="true"{% endif %} aria-describedby="stock-info-{{ item.id }}">
+                                            <span id="stock-info-{{ item.id }}" class="sr-only">Estoque disponível: {{ item.product.stock }}</span>
+                                            <button type="submit" class="bg-blue-500 text-white p-1 rounded-md hover:bg-blue-600 transition duration-200 text-xs" {% if item.product.stock == 0 %}disabled aria-disabled="true"{% endif %} data-original-text="Atualizar" aria-label="Atualizar">Atualizar</button>
+                                        </div>
+                                    </form>
+                                </td>
+                                <td class="py-3 px-6 text-center" aria-labelledby="product-name-{{ item.id }}">R$ <span class="item-total-price">{{ item.get_total_price|floatformat:2 }}</span></td>
+                                <td class="py-3 px-6 text-center">
+                                    <form class="remove-from-cart-form" data-item-id="{{ item.id }}" action="{% url 'store:remove_from_cart' item.id %}" method="POST" aria-label="Remover {{ item.product.name }} do carrinho">
+                                        {% csrf_token %}
+                                        <button type="submit" class="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition duration-200 text-xs" data-original-text="Remover" aria-label="Remover">
+                                            Remover
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-end mt-8">
+                <div class="text-right text-2xl font-bold text-gray-700" role="status" aria-live="polite">
+                    Total do Carrinho: <span class="text-pink-600" id="cart-total-price">R$ {{ cart.get_total_price|floatformat:2 }}</span>
+                </div>
+            </div>
+
+            <div class="flex justify-center mt-10">
+                <a href="{% url 'store:checkout' %}" class="bg-green-600 text-white py-3 px-8 rounded-full text-xl font-semibold hover:bg-green-700 transition duration-300 shadow-lg transform hover:-translate-y-1" role="button">
+                    Finalizar Compra
+                </a>
+            </div>
+        {% else %}
+            <div class="text-center text-gray-600 py-12" id="empty-cart-message" role="status">
+                <p class="text-2xl mb-4">Seu carrinho está vazio!</p>
+                <p class="text-lg">Parece que você ainda não adicionou nenhum produto ao seu carrinho de compras.</p>
+                <p class="text-lg mt-4">Que tal explorar nossos <a href="{% url 'store:product_list' %}" class="text-pink-600 hover:underline font-semibold" role="link">produtos incríveis</a> e encontrar algo que você ame?</p>
+                <a href="{% url 'store:product_list' %}" class="mt-6 inline-block bg-pink-600 text-white py-3 px-6 rounded-full text-lg font-semibold hover:bg-pink-700 transition duration-300 shadow-lg transform hover:-translate-y-1" role="button">
+                    Ver Todos os Produtos
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Função para exibir mensagens dinâmicas (definida em base.html)
+        // Esta é uma declaração de fallback caso base.html não carregue primeiro ou a função não esteja globalmente disponível.
+        // A função real em base.html irá sobrescrever esta.
+        function displayMessage(message, type) {
+            console.log(`Mensagem (${type}): ${message}`);
+            // Fallback simples caso a função em base.html não esteja carregada
+            alert(message); 
+        }
+
+        // Função para atualizar a UI do carrinho
+        function updateCartUI(cartData) {
+            const cartItemsBody = document.getElementById('cart-items-body');
+            const cartTotalPriceElement = document.getElementById('cart-total-price');
+            const cartCountElement = document.querySelector('.cart-items-count');
+            const emptyCartMessage = document.getElementById('empty-cart-message');
+
+            // Atualiza a contagem do carrinho no cabeçalho
+            if (cartCountElement) {
+                cartCountElement.innerText = cartData.cart_count;
+                if (cartData.cart_count > 0) {
+                    cartCountElement.closest('.relative').querySelector('span').classList.remove('hidden');
+                } else {
+                    cartCountElement.closest('.relative').querySelector('span').classList.add('hidden');
+                }
+            }
+
+            // Atualiza o preço total do carrinho
+            if (cartTotalPriceElement) {
+                cartTotalPriceElement.innerText = `R$ ${cartData.cart_total_price.toFixed(2).replace('.', ',')}`;
+            }
+
+            // Remove todos os itens existentes na tabela
+            while (cartItemsBody && cartItemsBody.firstChild) {
+                cartItemsBody.removeChild(cartItemsBody.firstChild);
+            }
+
+            // Adiciona os novos itens à tabela
+            if (cartData.cart_items.length > 0) {
+                if (emptyCartMessage) {
+                    // Esconde a mensagem de carrinho vazio e exibe a tabela
+                    emptyCartMessage.classList.add('hidden');
+                    const cartTableContainer = document.querySelector('.overflow-x-auto');
+                    if (cartTableContainer) cartTableContainer.classList.remove('hidden');
+                    const checkoutButtonContainer = document.querySelector('.flex.justify-center.mt-10');
+                    if (checkoutButtonContainer) checkoutButtonContainer.classList.remove('hidden');
+                }
+                cartData.cart_items.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-gray-200 hover:bg-gray-50';
+                    row.id = `cart-item-${item.id}`;
+                    // Correção na URL: use item.id diretamente, não a substituição de '/0/'
+                    row.innerHTML = `
+                        <td class="py-3 px-6 text-left whitespace-nowrap">
+                            <div class="flex items-center">
+                                <img class="w-12 h-12 rounded-full object-cover mr-4" src="${item.image_url}" alt="${item.product_name}">
+                                <span id="product-name-${item.id}">${item.product_name}</span>
+                            </div>
+                            ${item.quantity > item.stock ? '<p class="text-red-500 text-xs mt-1" role="alert">Atenção: A quantidade excede o estoque disponível (' + item.stock + ').</p>' : ''}
+                            ${item.tracking_code ? '<p class="text-xs text-gray-500 mt-1">Cód. Rastreamento: <span class="font-semibold">' + item.tracking_code + '</span></p>' : ''}
+                        </td>
+                        <td class="py-3 px-6 text-center" aria-labelledby="product-name-${item.id}">R$ <span class="product-price">${item.price.toFixed(2).replace('.', ',')}</span></td>
+                        <td class="py-3 px-6 text-center">
+                            <form class="update-cart-form" data-item-id="${item.id}" action="/store/carrinho/atualizar/${item.id}/" method="POST" aria-label="Atualizar quantidade de ${item.product_name}">
+                                {% csrf_token %}
+                                <div class="flex items-center justify-center gap-2">
+                                    <label for="quantity-${item.id}" class="sr-only">Quantidade para ${item.product_name}</label>
+                                    <input type="number" id="quantity-${item.id}" name="quantity" value="${item.quantity}" min="1" max="${item.stock}" class="w-16 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-pink-500" ${item.stock === 0 ? 'disabled aria-disabled="true"' : ''} aria-describedby="stock-info-${item.id}">
+                                    <span id="stock-info-${item.id}" class="sr-only">Estoque disponível: ${item.stock}</span>
+                                    <button type="submit" class="bg-blue-500 text-white p-1 rounded-md hover:bg-blue-600 transition duration-200 text-xs" ${item.stock === 0 ? 'disabled aria-disabled="true"' : ''} data-original-text="Atualizar" aria-label="Atualizar">Atualizar</button>
+                                </div>
+                            </form>
+                        </td>
+                        <td class="py-3 px-6 text-center" aria-labelledby="product-name-${item.id}">R$ <span class="item-total-price">${item.total_item_price.toFixed(2).replace('.', ',')}</span></td>
+                        <td class="py-3 px-6 text-center">
+                            <form class="remove-from-cart-form" data-item-id="${item.id}" action="/store/carrinho/remover/${item.id}/" method="POST" aria-label="Remover ${item.product_name} do carrinho">
+                                {% csrf_token %}
+                                <button type="submit" class="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition duration-200 text-xs" data-original-text="Remover" aria-label="Remover">
+                                    Remover
+                                </button>
+                            </form>
+                        </td>
+                    `;
+                    if (cartItemsBody) {
+                        cartItemsBody.appendChild(row);
+                    }
+                });
+            } else {
+                // Se não houver itens, mostra a mensagem de carrinho vazio
+                if (emptyCartMessage) {
+                    emptyCartMessage.classList.remove('hidden');
+                    const cartTableContainer = document.querySelector('.overflow-x-auto');
+                    if (cartTableContainer) cartTableContainer.classList.add('hidden');
+                    const checkoutButtonContainer = document.querySelector('.flex.justify-center.mt-10');
+                    if (checkoutButtonContainer) checkoutButtonContainer.classList.add('hidden');
+                }
+            }
+
+            // Re-adiciona os event listeners para os novos formulários
+            attachCartFormListeners();
+        }
+
+        // Função para anexar event listeners aos formulários do carrinho
+        function attachCartFormListeners() {
+            document.querySelectorAll('.update-cart-form').forEach(form => {
+                form.removeEventListener('submit', handleCartFormSubmit); // Evita duplicidade
+                form.addEventListener('submit', handleCartFormSubmit);
+            });
+
+            document.querySelectorAll('.remove-from-cart-form').forEach(form => {
+                form.removeEventListener('submit', handleCartFormSubmit); // Evita duplicidade
+                form.addEventListener('submit', handleCartFormSubmit);
+            });
+        }
+
+        // Handler genérico para envio de formulários do carrinho via AJAX
+        async function handleCartFormSubmit(event) {
+            event.preventDefault();
+
+            const form = event.target;
+            const formData = new FormData(form);
+            const itemId = form.dataset.itemId;
+            const submitButton = form.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.dataset.originalText; // Pega o texto original
+
+            submitButton.disabled = true; // Desabilita o botão
+            submitButton.innerHTML = '<svg class="animate-spin h-4 w-4 text-white inline-block mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processando...';
+
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayMessage(data.message, 'success');
+                    updateCartUI(data); // Atualiza toda a UI do carrinho
+                } else {
+                    displayMessage(data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Erro na operação do carrinho:', error);
+                displayMessage('Ocorreu um erro na operação do carrinho.', 'error');
+            } finally {
+                submitButton.disabled = false; // Reabilita o botão
+                submitButton.innerHTML = originalButtonText; // Restaura o texto original
+            }
+        }
+
+        // Anexa os listeners quando a página carrega
+        document.addEventListener('DOMContentLoaded', attachCartFormListeners);
+
+    </script>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="bg-white rounded-2xl shadow-xl p-8 lg:p-12 animate-fade-in">
+        <h1 class="text-4xl lg:text-5xl font-bold text-gray-700 mb-8 text-center leading-tight">Bem-vindo(a), {{ user.username }}!</h1>
+        
+        <div class="prose prose-lg max-w-none text-gray-600 mx-auto text-center">
+            <p class="text-xl mb-6">
+                Este é o seu painel de perfil. Aqui você pode gerenciar suas informações e acompanhar seus pedidos.
+            </p>
+            <p class="text-lg mb-4">
+                <strong>Nome de Usuário:</strong> {{ user.username }}
+            </p>
+            <p class="text-lg mb-4">
+                <strong>E-mail:</strong> {{ user.email }}
+            </p>
+
+            {# NOVO BLOCO: Se o usuário é um vendedor, mostrar links para gerenciar produtos e pedidos #}
+            {% if user.is_authenticated %}
+                {# Tenta acessar o perfil do usuário. Se não existir, user.profile será nulo. #}
+                {% if user.profile and user.profile.is_seller %}
+                    <div class="mt-10 p-6 bg-pink-50 rounded-lg shadow-inner border border-pink-200">
+                        <h2 class="text-3xl font-bold text-gray-700 mb-6">Área do Vendedor</h2>
+                        <div class="flex flex-col sm:flex-row justify-center gap-4">
+                            <a href="{% url 'store:my_products' %}" class="bg-pink-600 text-white py-3 px-6 rounded-full text-lg font-semibold hover:bg-pink-700 transition duration-300 shadow-lg transform hover:-translate-y-1">
+                                Gerenciar Meus Produtos
+                            </a>
+                            <a href="{% url 'store:add_product' %}" class="bg-green-600 text-white py-3 px-6 rounded-full text-lg font-semibold hover:bg-green-700 transition duration-300 shadow-lg transform hover:-translate-y-1">
+                                Adicionar Novo Produto
+                            </a>
+                            <a href="{% url 'store:seller_orders' %}" class="bg-purple-600 text-white py-3 px-6 rounded-full text-lg font-semibold hover:bg-purple-700 transition duration-300 shadow-lg transform hover:-translate-y-1">
+                                Gerenciar Pedidos de Venda
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endif %}
+
+            <div class="mt-10">
+                <h2 class="text-3xl font-bold text-gray-700 mb-6">Meus Pedidos</h2>
+                {% if user_orders %}
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <thead>
+                                <tr class="bg-pink-50 text-pink-700 uppercase text-sm leading-normal">
+                                    <th class="py-3 px-6 text-left">Pedido #</th>
+                                    <th class="py-3 px-6 text-left">Data</th>
+                                    <th class="py-3 px-6 text-center">Total</th>
+                                    <th class="py-3 px-6 text-center">Status</th>
+                                    <th class="py-3 px-6 text-center">Itens</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-gray-600 text-sm font-light">
+                                {% for order in user_orders %}
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-6 text-left whitespace-nowrap">
+                                            {{ order.id }}
+                                        </td>
+                                        <td class="py-3 px-6 text-left">
+                                            {{ order.created_at|date:"d/m/Y H:i" }}
+                                        </td>
+                                        <td class="py-3 px-6 text-center">
+                                            R$ {{ order.total_price|floatformat:2 }}
+                                        </td>
+                                        <td class="py-3 px-6 text-center">
+                                            <span class="px-3 py-1 rounded-full text-xs font-semibold 
+                                                {% if order.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                                {% elif order.status == 'processing' %}bg-blue-100 text-blue-800
+                                                {% elif order.status == 'shipped' %}bg-indigo-100 text-indigo-800
+                                                {% elif order.status == 'completed' %}bg-green-100 text-green-800
+                                                {% elif order.status == 'cancelled' %}bg-red-100 text-red-800
+                                                {% endif %}">
+                                                {{ order.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td class="py-3 px-6 text-left">
+                                            <ul class="list-disc list-inside">
+                                                {% for item in order.items.all %}
+                                                    <li>{{ item.quantity }}x 
+                                                        {% if item.product %}
+                                                            {{ item.product.name }}
+                                                        {% else %}
+                                                            Produto Removido
+                                                        {% endif %}
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-gray-600">Você ainda não fez nenhum pedido.</p>
+                {% endif %}
+            </div>
+
+            <div class="mt-10">
+                <a href="{% url 'logout' %}" class="bg-red-500 text-white py-3 px-6 rounded-full text-lg font-semibold hover:bg-red-600 transition duration-300 shadow-lg transform hover:-translate-y-1">
+                    Sair da Conta
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

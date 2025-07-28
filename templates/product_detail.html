@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="bg-white rounded-2xl shadow-xl p-8 lg:p-12 flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-12 animate-fade-in">
+        <div class="md:w-1/2 flex justify-center items-center p-4 bg-stone-50 rounded-xl shadow-inner">
+            <!-- Verifica se o produto tem uma imagem antes de tentar exibi-la -->
+            {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full max-h-[500px] object-contain rounded-lg shadow-md border border-stone-200 transition duration-300 transform hover:scale-102 product-image-detail">
+            {% else %}
+                <img src="https://placehold.co/600x600/e0e0e0/555555?text=Sem+Imagem" alt="Sem Imagem" class="w-full max-h-[500px] object-contain rounded-lg shadow-md border border-stone-200 product-image-detail">
+            {% endif %}
+        </div>
+        <div class="md:w-1/2 flex flex-col justify-center">
+            <h1 class="text-4xl lg:text-5xl font-extrabold text-gray-700 mb-4 leading-tight">{{ product.name }}</h1>
+            <p class="text-3xl lg:text-4xl font-extrabold text-pink-600 mb-6">R$ {{ product.price|floatformat:2 }}</p>
+            <p class="text-gray-600 leading-relaxed mb-8 text-lg">{{ product.description }}</p>
+            
+            <!-- Exibir o estoque do produto -->
+            {% if product.stock > 0 %}
+                <p class="text-lg text-green-600 font-semibold mb-4">Em estoque: {{ product.stock }} unidades</p>
+            {% else %}
+                <p class="text-lg text-red-600 font-semibold mb-4">Esgotado!</p>
+            {% endif %}
+
+            <!-- NOVO: Exibir o código de rastreamento do produto -->
+            {% if product.tracking_code %}
+                <p class="text-lg text-gray-700 font-semibold mb-4">Código de Rastreamento: <span class="text-blue-600">{{ product.tracking_code }}</span></p>
+            {% endif %}
+
+            <div class="flex flex-col sm:flex-row gap-4">
+                <!-- Formulário "Adicionar ao Carrinho" (agora com AJAX) -->
+                <form id="add-to-cart-form" action="{% url 'store:add_to_cart' product.pk %}" method="POST" class="flex-1 flex items-center gap-2">
+                    {% csrf_token %}
+                    <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}" class="w-20 p-2 border border-gray-300 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-pink-500" {% if product.stock == 0 %}disabled{% endif %}>
+                    <button type="submit" class="flex-1 bg-pink-600 text-white py-3 px-6 rounded-full text-lg font-semibold hover:bg-pink-700 transition duration-300 shadow-lg transform hover:-translate-y-1 {% if product.stock == 0 %}opacity-50 cursor-not-allowed{% endif %}" {% if product.stock == 0 %}disabled{% endif %} data-original-text="Adicionar ao Carrinho">
+                        Adicionar ao Carrinho
+                    </button>
+                </form>
+
+                <!-- Link para contato via WhatsApp sobre este produto -->
+                {# Usa a variável STORE_WHATSAPP_NUMBER do settings, que deve ser acessível via context #}
+                <a href="https://wa.me/{{ STORE_WHATSAPP_NUMBER }}?text=Olá,%20gostaria%20de%20saber%20mais%20sobre%20o%20produto:%20{{ product.name }}%20(ID:%20{{ product.pk }})!{% if product.tracking_code %}%0ACódigo%20de%20Rastreamento:%20{{ product.tracking_code }}{% endif %}" 
+                   target="_blank" 
+                   class="flex-1 inline-flex items-center justify-center bg-green-500 text-white py-3 px-6 rounded-full text-lg font-semibold hover:bg-green-600 transition duration-300 shadow-lg transform hover:-translate-y-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor" class="w-5 h-5 mr-2">
+                        <path d="M380.9 97.1C339.4 55.6 283.9 32 224 32S108.6 55.6 67.1 97.1 32 183.9 32 243.9c0 42.4 13.9 82.1 39.1 113.8L32 480l116.9-31.6c30.7 17.7 65.4 27.9 101.1 27.9 59.9 0 115.4-23.6 156.9-65.1S416 303.9 416 243.9c0-59.9-23.6-115.4-65.1-156.9zM224 416c-35.1 0-69.1-10.2-98.1-29.6l-7.1-4.2L70.5 401l18.4-69.2-4.5-7.2c-20.2-32.3-31.7-69.1-31.7-108.1 0-48.4 19-93.7 53-127.7S175.6 80 224 80s93.7 19 127.7 53 53 79.3 53 127.7-19 93.7-53 127.7-79.3 53-127.7 53zM309.2 272.2c-1.6-1.6-4.2-2.5-6.7-2.5-2.5 0-5.1.9-6.7 2.5l-32.1 32.1c-1.6 1.6-4.2 2.5-6.7 2.5-2.5 0-5.1-.9-6.7-2.5l-19.2-19.2c-1.6-1.6-2.5-4.2-2.5-6.7s.9-5.1 2.5-6.7l32.1-32.1c1.6-1.6 2.5-4.2 2.5-6.7s-.9-5.1-2.5-6.7l-19.2-19.2c-1.6-1.6-4.2-2.5-6.7-2.5-2.5 0-5.1.9-6.7 2.5l-32.1 32.1c-1.6 1.6-2.5 4.2-2.5 6.7s.9 5.1 2.5 6.7l19.2 19.2c1.6 1.6 2.5 4.2 2.5 6.7s-.9 5.1-2.5 6.7l-32.1 32.1c-1.6 1.6-4.2 2.5-6.7 2.5-2.5 0-5.1-.9-6.7-2.5l-19.2-19.2c-1.6-1.6-2.5-4.2-2.5-6.7s.9-5.1 2.5-6.7z"/>
+                    </svg>
+                    Fale Conosco
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('add-to-cart-form').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Impede o envio padrão do formulário
+
+            const form = event.target;
+            const formData = new FormData(form);
+            const quantityInput = form.querySelector('input[name="quantity"]');
+            const addButton = form.querySelector('button[type="submit"]');
+            const originalButtonText = addButton.dataset.originalText; // Pega o texto original do botão
+
+            // Desabilita o botão e mostra um indicador de carregamento
+            addButton.disabled = true;
+            addButton.innerHTML = '<svg class="animate-spin h-5 w-5 text-white inline-block mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Adicionando...';
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest', // Indica que é uma requisição AJAX
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken') // Envia o token CSRF
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Inicia a animação "fly-to-cart"
+                    const productImage = document.querySelector('.product-image-detail');
+                    const cartIcon = document.querySelector('.cart-items-count'); // O span do contador
+                    
+                    if (productImage && cartIcon) {
+                        const imgClone = productImage.cloneNode(true);
+                        imgClone.style.position = 'fixed';
+                        imgClone.style.zIndex = '9999';
+                        imgClone.style.transition = 'all 0.8s ease-in-out';
+                        imgClone.style.width = productImage.offsetWidth + 'px';
+                        imgClone.style.height = productImage.offsetHeight + 'px';
+                        imgClone.style.top = productImage.getBoundingClientRect().top + 'px';
+                        imgClone.style.left = productImage.getBoundingClientRect().left + 'px';
+                        imgClone.style.borderRadius = '9999px'; // Para torná-lo redondo
+
+                        document.body.appendChild(imgClone);
+
+                        // Força o reflow para garantir que a transição comece do estado inicial
+                        imgClone.getBoundingClientRect(); 
+
+                        // Animação para o ícone do carrinho
+                        const cartRect = cartIcon.getBoundingClientRect();
+                        imgClone.style.top = cartRect.top + 'px';
+                        imgClone.style.left = cartRect.left + 'px';
+                        imgClone.style.width = '20px';
+                        imgClone.style.height = '20px';
+                        imgClone.style.opacity = '0';
+
+                        setTimeout(() => {
+                            imgClone.remove();
+                        }, 800); // Remove após a animação
+                    }
+
+                    // Atualiza a contagem do carrinho no cabeçalho
+                    if (cartCountElement) {
+                        cartCountElement.innerText = data.cart_count;
+                        // Mostra o span se a contagem for maior que 0
+                        if (data.cart_count > 0) {
+                            cartCountElement.closest('.relative').querySelector('span').classList.remove('hidden');
+                        } else {
+                            cartCountElement.closest('.relative').querySelector('span').classList.add('hidden');
+                        }
+                    }
+                    displayMessage(data.message, 'success');
+                } else {
+                    displayMessage(data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao adicionar ao carrinho:', error);
+                displayMessage('Ocorreu um erro ao adicionar o produto ao carrinho.', 'error');
+            } finally {
+                // Reabilita o botão e restaura o texto
+                addButton.disabled = false;
+                addButton.innerHTML = originalButtonText;
+                quantityInput.value = 1; // Reseta a quantidade para 1
+            }
+        });
+
+        // Função para exibir mensagens dinâmicas (será definida em base.html)
+        // Esta é uma declaração de fallback caso base.html não carregue primeiro ou a função não esteja globalmente disponível.
+        // A função real em base.html irá sobrescrever esta.
+        function displayMessage(message, type) {
+            console.log(`Mensagem (${type}): ${message}`);
+            // Fallback simples caso a função em base.html não esteja carregada
+            alert(message); 
+        }
+
+        // Garante que o elemento do contador do carrinho exista ou seja criado
+        document.addEventListener('DOMContentLoaded', () => {
+            let cartCountElement = document.querySelector('.cart-items-count');
+            if (!cartCountElement) {
+                const cartIcon = document.querySelector('a[href*="view_cart"]');
+                if (cartIcon) {
+                    const span = document.createElement('span');
+                    span.className = 'absolute -top-1 -right-1 bg-pink-600 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center cart-items-count';
+                    span.innerText = '0'; // Valor inicial
+                    span.classList.add('hidden'); // Esconde se for 0
+                    cartIcon.appendChild(span);
+                }
+            }
+        });
+
+    </script>
+{% endblock %}

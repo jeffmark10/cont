@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title|default:"Jeci Store" }}</title>
+    <!-- Carrega a fonte Inter do Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Carrega o Tailwind CSS compilado localmente -->
+    {% load static %}
+    <link href="{% static 'dist/output.css' %}" rel="stylesheet">
+
+    <style>
+        /* Estilo para a fonte Inter */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Animação de fade-in */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+        .animate-fade-in-delay-1 {
+            animation: fadeIn 0.8s ease-out forwards;
+            animation-delay: 0.2s;
+        }
+        .animate-fade-in-delay-2 {
+            animation: fadeIn 1s ease-out forwards;
+            animation-delay: 0.4s;
+        }
+
+        /* Estilos para o menu lateral deslizante */
+        .sidebar {
+            width: 0; /* Largura inicial oculta */
+            position: fixed;
+            z-index: 1000;
+            top: 0;
+            left: 0;
+            background-color: #fdf2f8; /* Cor de fundo suave */
+            overflow-x: hidden;
+            transition: 0.5s; /* Transição suave */
+            padding-top: 60px;
+            height: 100%;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar.open {
+            width: 280px; /* Largura quando aberto */
+        }
+
+        .sidebar a {
+            padding: 15px 25px;
+            text-decoration: none;
+            font-size: 1.1rem;
+            color: #4A5568; /* Cor do texto */
+            display: block;
+            transition: 0.3s;
+            border-bottom: 1px solid #fce7f3; /* Linha divisória suave */
+        }
+
+        .sidebar a:hover {
+            color: #DB2777; /* Cor rosa mais forte no hover */
+            background-color: #fbcfe8; /* Fundo rosa claro no hover */
+        }
+
+        .sidebar .closebtn {
+            position: absolute;
+            top: 0;
+            right: 25px;
+            font-size: 36px;
+            margin-left: 50px;
+            color: #EF4444; /* Cor para o botão fechar */
+            cursor: pointer;
+        }
+
+        .sidebar .category-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .sidebar .submenu {
+            padding-left: 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background-color: #fff; /* Fundo do submenu */
+        }
+
+        .sidebar .submenu.open {
+            max-height: 500px; /* Altura máxima para exibir o submenu */
+        }
+
+        /* Overlay para quando o menu lateral estiver aberto */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+            z-index: 999;
+            display: none; /* Oculto por padrão */
+        }
+        .overlay.active {
+            display: block;
+        }
+
+        /* Ajuste do conteúdo principal quando o menu está aberto */
+        #main-content-wrapper.shifted {
+            margin-left: 280px;
+        }
+
+        @media (max-width: 640px) {
+            .sidebar.open {
+                width: 100%; /* Em telas pequenas, o menu ocupa toda a largura */
+            }
+            #main-content-wrapper.shifted {
+                margin-left: 0; /* Não desloca o conteúdo em telas pequenas */
+            }
+        }
+
+        /* Estilo para mensagens dinâmicas (NOVO) */
+        .dynamic-messages-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1050; /* Acima de overlays e modals */
+            width: 90%;
+            max-width: 400px;
+        }
+        .dynamic-message {
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            animation: slideInRight 0.5s ease-out forwards;
+            opacity: 0; /* Começa oculto para a animação */
+            animation-fill-mode: forwards; /* Garante que o estado final da animação seja mantido */
+        }
+        .dynamic-message.fade-out {
+            animation: fadeOut 0.5s ease-out forwards;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .dynamic-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .dynamic-message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .dynamic-message.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        .dynamic-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-stone-50 to-pink-50 flex flex-col min-h-screen text-gray-700">
+
+    <!-- Menu Lateral Deslizante -->
+    <div id="sidebar" class="sidebar">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        <h3 class="text-2xl font-bold text-gray-800 px-6 py-4 border-b border-pink-100">Categorias</h3>
+        <a href="{% url 'store:product_list' %}" class="font-bold text-pink-600 hover:text-pink-800">Todos os Produtos</a>
+        {% for category in categories %}
+            {% if not category.parent %} {# Apenas categorias de nível superior #}
+                <div class="category-toggle" onclick="toggleSubMenu(this)">
+                    <a href="{% url 'store:product_list_by_category' category_slug=category.slug %}" class="flex-grow">{{ category.name }}</a>
+                    {% if category.children.all %}
+                        <span class="px-4 text-gray-500">&#9660;</span> {# Seta para baixo #}
+                    {% endif %}
+                </div>
+                {% if category.children.all %}
+                    <div class="submenu">
+                        {% for subcategory in category.children.all %}
+                            <a href="{% url 'store:product_list_by_category' category_slug=subcategory.slug %}" class="text-sm">{{ subcategory.name }}</a>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Overlay -->
+    <div id="overlay" class="overlay" onclick="closeNav()"></div>
+
+    <!-- Wrapper para o conteúdo principal, para permitir deslocamento -->
+    <div id="main-content-wrapper" class="flex flex-col min-h-screen transition-all duration-500 ease-in-out">
+        <!-- Cabeçalho da Jeci Store -->
+        <header class="bg-white shadow-lg p-4 sticky top-0 z-50">
+            <nav class="container mx-auto flex flex-col sm:flex-row justify-between items-center">
+                <div class="flex items-center mb-2 sm:mb-0">
+                    <span class="text-gray-600 text-3xl cursor-pointer mr-4" onclick="openNav()">&#9776;</span> {# Ícone de hambúrguer #}
+                    <a href="{% url 'home' %}" class="text-3xl font-extrabold text-gray-800">Jeci Store</a>
+                </div>
+
+                <!-- Barra de Busca (visível em telas maiores) -->
+                <div class="hidden md:block flex-grow mx-4">
+                    <form action="{% url 'store:product_list' %}" method="GET" class="flex items-center border border-gray-300 rounded-full px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-pink-500">
+                        <input type="text" name="q" placeholder="Buscar produtos..." class="flex-grow outline-none bg-transparent text-gray-700" value="{{ request.GET.q|default:'' }}">
+                        <button type="submit" class="text-gray-500 hover:text-pink-600 ml-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 text-lg items-center">
+                    <a href="{% url 'home' %}" class="text-gray-600 hover:text-pink-600 font-medium transition duration-200">Início</a>
+                    <a href="{% url 'store:product_list' %}" class="text-gray-600 hover:text-pink-600 font-medium transition duration-200">Produtos</a>
+                    <a href="{% url 'store:about' %}" class="text-gray-600 hover:text-pink-600 font-medium transition duration-200">Sobre Nós</a>
+                    <a href="{% url 'store:contact' %}" class="text-gray-600 hover:text-pink-600 font-medium transition duration-200">Contato</a>
+
+                    <!-- Ícone do Carrinho (agora com ID para atualização dinâmica) -->
+                    <a href="{% url 'store:view_cart' %}" class="relative text-gray-600 hover:text-pink-600 transition duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5H3m4 8V5m0 8a2 2 0 100 4m0-4a2 2 0 110 4m-8 0a2 2 0 100 4m0-4a2 2 0 110 4" />
+                        </svg>
+                        {# Usa a variável 'cart_items_count' do context processor #}
+                        <span class="absolute -top-1 -right-1 bg-pink-600 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center cart-items-count {% if cart_items_count == 0 %}hidden{% endif %}">{{ cart_items_count }}</span>
+                    </a>
+
+                    <!-- Links de Autenticação -->
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'store:user_profile' %}" class="text-gray-600 hover:text-pink-600 font-medium transition duration-200">Olá, {{ user.username }}</a>
+                        {# Alterado para um formulário POST para segurança no logout #}
+                        <form action="{% url 'logout' %}" method="post" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="bg-red-500 text-white py-1 px-3 rounded-full text-sm hover:bg-red-600 transition duration-200">Sair</button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="text-gray-600 hover:text-pink-600 font-medium transition duration-200">Entrar</a>
+                        <a href="{% url 'store:signup' %}" class="bg-pink-600 text-white py-1 px-3 rounded-full text-sm hover:bg-pink-700 transition duration-200">Registrar</a>
+                    {% endif %}
+                </div>
+            </nav>
+            <!-- Barra de Busca (visível em telas menores) -->
+            <div class="md:hidden mt-4">
+                <form action="{% url 'store:product_list' %}" method="GET" class="flex items-center border border-gray-300 rounded-full px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-pink-500">
+                    <input type="text" name="q" placeholder="Buscar produtos..." class="flex-grow outline-none bg-transparent text-gray-700" value="{{ request.GET.q|default:'' }}">
+                    <button type="submit" class="text-gray-500 hover:text-pink-600 ml-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </header>
+
+        <!-- Área de Mensagens Dinâmicas (NOVO) -->
+        <div id="dynamic-messages-container" class="dynamic-messages-container">
+            {# Mensagens Django existentes serão convertidas para dinâmicas via JS #}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="dynamic-message {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <!-- Conteúdo principal da página -->
+        <main class="flex-grow container mx-auto p-4 md:p-8">
+            {% block content %}
+            <!-- O conteúdo específico de cada página será inserido aqui -->
+            {% endblock %}
+        </main>
+
+        <!-- Rodapé da Jeci Store -->
+        <footer class="bg-stone-800 text-white p-6 mt-12 shadow-inner">
+            <div class="container mx-auto text-center">
+                <p class="text-sm md:text-base">&copy; 2024 Jeci Store. Todos os direitos reservados.</p>
+                <div class="mt-3 text-xs md:text-sm space-x-4">
+                    <a href="{% url 'store:about' %}" class="hover:text-pink-300 transition duration-200">Sobre Nós</a>
+                    <span class="text-stone-600">|</span>
+                    <a href="{% url 'store:contact' %}" class="hover:text-pink-300 transition duration-200">Contato</a>
+                </div>
+            </div>
+        </footer>
+    </div> <!-- Fim do main-content-wrapper -->
+
+    <!-- Botão Flutuante do WhatsApp -->
+    {# Usa a variável STORE_WHATSAPP_NUMBER do settings, que deve ser acessível via context #}
+    <a href="https://wa.me/{{ STORE_WHATSAPP_NUMBER }}?text=Olá,%20gostaria%20de%20saber%20mais%20sobre%20a%20Jeci%20Store!"
+       target="_blank"
+       class="fixed bottom-5 right-5 z-50 bg-green-500 text-white p-3 rounded-full shadow-lg flex items-center justify-center transition duration-300 transform hover:scale-110 hover:bg-green-600">
+        <!-- Ícone SVG do WhatsApp para garantir que ele apareça -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor" class="w-7 h-7">
+            <path d="M380.9 97.1C339.4 55.6 283.9 32 224 32S108.6 55.6 67.1 97.1 32 183.9 32 243.9c0 42.4 13.9 82.1 39.1 113.8L32 480l116.9-31.6c30.7 17.7 65.4 27.9 101.1 27.9 59.9 0 115.4-23.6 156.9-65.1S416 303.9 416 243.9c0-59.9-23.6-115.4-65.1-156.9zM224 416c-35.1 0-69.1-10.2-98.1-29.6l-7.1-4.2L70.5 401l18.4-69.2-4.5-7.2c-20.2-32.3-31.7-69.1-31.7-108.1 0-48.4 19-93.7 53-127.7S175.6 80 224 80s93.7 19 127.7 53 53 79.3 53 127.7-19 93.7-53 127.7-79.3 53-127.7 53zM309.2 272.2c-1.6-1.6-4.2-2.5-6.7-2.5-2.5 0-5.1.9-6.7 2.5l-32.1 32.1c-1.6 1.6-4.2 2.5-6.7 2.5-2.5 0-5.1-.9-6.7-2.5l-19.2-19.2c-1.6-1.6-2.5-4.2-2.5-6.7s.9-5.1 2.5-6.7l32.1-32.1c1.6-1.6 2.5-4.2 2.5-6.7s-.9-5.1-2.5-6.7l-19.2-19.2c-1.6-1.6-4.2-2.5-6.7-2.5-2.5 0-5.1.9-6.7 2.5l-32.1 32.1c-1.6 1.6-2.5 4.2-2.5 6.7s.9 5.1 2.5 6.7l19.2 19.2c1.6 1.6 2.5 4.2 2.5 6.7s-.9 5.1-2.5 6.7l-32.1 32.1c-1.6 1.6-4.2 2.5-6.7 2.5-2.5 0-5.1-.9-6.7-2.5l-19.2-19.2c-1.6-1.6-2.5-4.2-2.5-6.7s.9-5.1 2.5-6.7z"/>
+        </svg>
+    </a>
+
+    <script>
+        function openNav() {
+            document.getElementById("sidebar").classList.add("open");
+            document.getElementById("main-content-wrapper").classList.add("shifted");
+            document.getElementById("overlay").classList.add("active");
+        }
+
+        function closeNav() {
+            document.getElementById("sidebar").classList.remove("open");
+            document.getElementById("main-content-wrapper").classList.remove("shifted");
+            document.getElementById("overlay").classList.remove("active");
+        }
+
+        function toggleSubMenu(element) {
+            const submenu = element.nextElementSibling; // O próximo elemento é o submenu
+            if (submenu && submenu.classList.contains('submenu')) {
+                submenu.classList.toggle('open');
+                const arrow = element.querySelector('span');
+                if (arrow) {
+                    arrow.innerHTML = submenu.classList.contains('open') ? '&#9650;' : '&#9660;'; // Altera a seta
+                }
+            }
+        }
+
+        // Função para exibir mensagens dinâmicas (NOVO)
+        function displayMessage(message, type) {
+            const container = document.getElementById('dynamic-messages-container');
+            if (!container) return;
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `dynamic-message ${type}`;
+            messageDiv.innerText = message;
+
+            container.appendChild(messageDiv);
+
+            // Tempo de exibição da mensagem
+            let displayTime = 2000; // Padrão de 2 segundos para sucesso/info/warning
+            if (type === 'error') {
+                displayTime = 5000; // 5 segundos para mensagens de erro
+            }
+
+            // Adiciona a classe para iniciar o fade-out após o tempo de exibição
+            setTimeout(() => {
+                messageDiv.classList.add('fade-out');
+                // Remove o elemento após a animação de fade-out
+                messageDiv.addEventListener('animationend', () => {
+                    messageDiv.remove();
+                }, { once: true });
+            }, displayTime);
+        }
+
+        // Converte mensagens do Django para mensagens dinâmicas ao carregar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            const djangoMessages = document.querySelectorAll('.messages li');
+            djangoMessages.forEach(msg => {
+                const type = msg.className.split(' ')[0];
+                displayMessage(msg.innerText, type);
+            });
+            const staticMessagesContainer = document.querySelector('.messages');
+            if (staticMessagesContainer) {
+                staticMessagesContainer.remove();
+            }
+        });
+    </script>
+</body>
+</html>

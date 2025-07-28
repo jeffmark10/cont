@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load cache %} {# Carrega as tags de cache #}
+
+{% block content %}
+<section class="relative text-center py-16 md:py-24 bg-gradient-to-br from-pink-300 to-stone-200 text-gray-800 rounded-3xl shadow-2xl overflow-hidden mb-12" role="region" aria-label="Seção de Boas-vindas">
+    <div class="absolute inset-0 bg-pattern opacity-10" aria-hidden="true"></div>
+    <div class="relative z-10">
+        <h1 class="text-5xl md:text-6xl font-extrabold mb-4 animate-fade-in">Bem-vindo à Jeci Store!</h1>
+        <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto animate-fade-in-delay-1 text-gray-700">Descubra as sandálias e T-shirts mais estilosas e confortáveis para você brilhar em qualquer ocasião.</p>
+        <a href="{% url 'store:product_list' %}" class="bg-white text-pink-600 hover:bg-gray-100 font-bold py-3 px-8 rounded-full shadow-xl transition duration-300 ease-in-out transform hover:scale-105 hover:-translate-y-1 inline-block animate-fade-in-delay-2" role="button">
+            Explorar Produtos
+        </a>
+    </div>
+</section>
+
+<section class="py-12" role="region" aria-labelledby="featured-products-heading">
+    <h2 id="featured-products-heading" class="text-4xl font-bold text-center text-gray-700 mb-10">Produtos em Destaque</h2>
+
+    {% if featured_products %}
+    <!-- Carrossel de Produtos em Destaque (NOVO e Responsivo) -->
+    <div class="relative w-full overflow-hidden" role="group" aria-roledescription="carousel" aria-label="Produtos em Destaque Carrossel">
+        <div class="flex transition-transform duration-500 ease-in-out" id="carousel-inner">
+            {% for product in featured_products %}
+            {# Cada slide agora tem classes responsivas para largura #}
+            <div class="carousel-item flex-shrink-0 w-full sm:w-1/2 md:w-1/3 lg:w-1/4 px-4" role="group" aria-label="Slide {{ forloop.counter }} de {{ featured_products|length }}">
+                <div class="group bg-white rounded-xl shadow-lg overflow-hidden transform transition duration-300 hover:scale-105 hover:shadow-xl relative flex flex-col items-center justify-center p-6 h-full">
+                    <a href="{% url 'store:product_detail' pk=product.pk %}" class="block w-full text-center flex-grow flex flex-col justify-center items-center" aria-label="Ver detalhes de {{ product.name }}">
+                        {% if product.image %}
+                        {# ALTERADO: Usando a URL direta da imagem para depuração #}
+                        <img src="{{ product.image.url }}"
+                             alt="{{ product.name }}"
+                             class="w-full max-h-48 object-contain mx-auto transition duration-300 group-hover:opacity-85 rounded-lg mb-4">
+                        {% else %}
+                        <img src="https://placehold.co/400x400/cccccc/ffffff?text=Sem+Imagem" alt="Sem Imagem" class="w-full max-h-48 object-contain mx-auto rounded-lg mb-4">
+                        {% endif %}
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2 group-hover:text-pink-600 transition duration-200 text-center" id="product-name-home-{{ product.pk }}">{{ product.name }}</h3>
+                    </a>
+                    <p class="text-gray-600 text-lg font-bold mb-4" aria-labelledby="product-name-home-{{ product.pk }}">R$ {{ product.price|floatformat:2 }}</p>
+                    <a href="{% url 'store:product_detail' pk=product.pk %}" class="inline-block bg-pink-600 text-white py-2 px-4 rounded-full hover:bg-pink-700 transition duration-300 text-sm" role="button" aria-label="Ver detalhes do produto {{ product.name }}">
+                        Ver Detalhes
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Botões de Navegação do Carrossel -->
+        <button class="absolute top-1/2 left-2 transform -translate-y-1/2 bg-gray-800 bg-opacity-50 text-white p-2 rounded-full z-20 hover:bg-opacity-75 transition" onclick="prevSlide()" aria-label="Slide anterior">&#10094;</button>
+        <button class="absolute top-1/2 right-2 transform -translate-y-1/2 bg-gray-800 bg-opacity-50 text-white p-2 rounded-full z-20 hover:bg-opacity-75 transition" onclick="nextSlide()" aria-label="Próximo slide">&#10095;</button>
+    </div>
+    {% else %}
+    <div class="text-center text-gray-600 col-span-full py-8 text-xl" role="status">
+        <p class="text-2xl mb-4">Nenhum produto em destaque no momento.</p>
+        <p class="text-lg">Volte mais tarde para conferir nossas novidades ou explore <a href="{% url 'store:product_list' %}" class="text-pink-600 hover:underline font-semibold" role="link">todos os produtos</a>!</p>
+    </div>
+    {% endif %}
+</section>
+
+<section class="py-12 bg-pink-100 rounded-2xl shadow-lg text-center mt-12 animate-fade-in-delay-2" role="region" aria-labelledby="quality-heading">
+    <h2 id="quality-heading" class="text-3xl md:text-4xl font-bold text-gray-700 mb-4">Qualidade e Estilo para Você!</h2>
+    <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-4">Na Jeci Store, você encontra sandálias confortáveis e T-shirts com designs exclusivos. Conforto e moda andam juntos aqui, com a garantia de peças que duram e encantam.</p>
+</section>
+
+<script>
+    // Lógica do Carrossel Responsivo
+    let currentSlide = 0;
+    const carouselInner = document.getElementById('carousel-inner');
+    const slides = carouselInner ? Array.from(carouselInner.children) : [];
+    let slidesPerView = 1; // Padrão para mobile
+
+    // Função para determinar quantos slides exibir com base no tamanho da tela
+    function updateSlidesPerView() {
+        if (!carouselInner || slides.length === 0) return; // Adicionado para evitar erros se não houver carrossel
+
+        if (window.innerWidth >= 1024) { // lg breakpoint
+            slidesPerView = 4;
+        } else if (window.innerWidth >= 768) { // md breakpoint
+            slidesPerView = 3;
+        } else if (window.innerWidth >= 640) { // sm breakpoint
+            slidesPerView = 2;
+        } else {
+            slidesPerView = 1;
+        }
+        showSlide(currentSlide); // Recalcula a posição ao redimensionar
+    }
+
+    // Função para exibir o slide
+    function showSlide(index) {
+        if (!carouselInner || slides.length === 0) return;
+
+        const maxSlideIndex = slides.length - slidesPerView;
+
+        if (index > maxSlideIndex) {
+            currentSlide = 0; // Volta para o início se passar do final
+        } else if (index < 0) {
+            currentSlide = maxSlideIndex; // Vai para o final se for para trás do início
+        } else {
+            currentSlide = index;
+        }
+
+        // Calcula o offset com base na largura de um slide (100% / slidesPerView)
+        const slideWidthPercentage = 100 / slidesPerView;
+        const offset = -currentSlide * slideWidthPercentage;
+        carouselInner.style.transform = `translateX(${offset}%)`;
+    }
+
+    function nextSlide() {
+        showSlide(currentSlide + 1);
+    }
+
+    function prevSlide() {
+        showSlide(currentSlide - 1);
+    }
+
+    // Inicializa o carrossel e atualiza ao redimensionar
+    window.addEventListener('resize', updateSlidesPerView);
+    document.addEventListener('DOMContentLoaded', updateSlidesPerView); // Chama na carga inicial
+
+    // Opcional: Auto-play do carrossel
+    // setInterval(nextSlide, 5000); // Muda de slide a cada 5 segundos
+</script>
+{% endblock %}

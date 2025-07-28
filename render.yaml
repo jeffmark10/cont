@@ -1,0 +1,65 @@
+# render.yaml
+# Este arquivo define a configuração para implantar o projeto Jeci Store no Render.com.
+
+services:
+  - type: web # Define este serviço como um aplicativo web
+    name: jecistore # Nome do seu serviço web no Render
+    env: python # O ambiente de tempo de execução é Python
+    # Comando de construção: instala dependências, coleta arquivos estáticos e executa migrações
+    buildCommand: |
+      set -ex # Sai imediatamente se um comando falhar, e imprime comandos executados (para depuração)
+      pip install -r requirements.txt # Instala as dependências listadas em requirements.txt
+      
+      # --- NOVOS PASSOS PARA O BUILD DO TAILWIND CSS ---
+      echo "Instalando dependências do Node.js..."
+      npm install
+      echo "Construindo o CSS do Tailwind..."
+      npm run build:css # Executa o script que cria o output.css minificado
+      # --- FIM DOS NOVOS PASSOS ---
+      
+      python manage.py collectstatic --noinput -v 2 --clear # Coleta todos os arquivos estáticos (com verbosidade e limpeza forçada)
+      python manage.py migrate # Aplica as migrações do banco de dados
+      
+      # --- Debugging para o Superusuário ---
+      echo "Verificando a existência de manage.py..."
+      ls -l manage.py
+      echo "Verificando a existência do comando createsuperuser_if_not_exists.py..."
+      ls -l store/management/commands/createsuperuser_if_not_exists.py
+      echo "Tentando criar superusuário se não existir..."
+      python manage.py createsuperuser_if_not_exists
+      echo "Comando createsuperuser_if_not_exists executado."
+      # --- Fim do Debugging ---
+
+    # Comando de inicialização: usa Gunicorn para servir a aplicação Django
+    startCommand: gunicorn jecistore_project.wsgi:application --bind 0.0.0.0:$PORT
+    envVars: # Variáveis de ambiente para o seu aplicativo Django
+      - key: PYTHON_VERSION # Define a versão do Python
+        value: 3.11.9 # <--- ALINHE ESTE VALOR com a versão do Python que você está usando localmente
+      - key: DJANGO_SECRET_KEY # Chave secreta do Django
+        generateValue: true # O Render pode gerar um valor seguro para você
+      - key: DJANGO_DEBUG # Modo de depuração do Djangao
+        value: "False" # <--- SEMPRE defina como "False" em produção
+      - key: WEB_CONCURRENCY # Número de workers Gunicorn (ajuste com base nos núcleos da CPU do seu servidor)
+        value: 4 # Um bom ponto de partida, ajuste conforme necessário
+      # O Render pode injetar a URL completa do banco de dados, que django-environ usa.
+      - key: DATABASE_URL # Variável de ambiente para a URL completa do banco de dados
+        fromDatabase:
+          name: jecistore-database # Nome do banco de dados PostgreSQL
+          property: connectionString # Obtém a string de conexão completa
+      - key: STORE_WHATSAPP_NUMBER # Número do WhatsApp da loja
+        value: "5561998504619" # Seu número de WhatsApp (com código do país e DDD)
+      - key: DJANGO_ALLOWED_HOSTS # Para ALLOWED_HOSTS em produção
+        value: jecistore.onrender.com,127.0.0.1,localhost
+      # NOVAS VARIÁVEIS PARA O SUPERUSUÁRIO
+      - key: DJANGO_SUPERUSER_USERNAME
+        value: jeffmark # Altere para o nome de usuário desejado
+      - key: DJANGO_SUPERUSER_EMAIL
+        value: jeffersongarcia2013@gmail.com # Altere para o e-mail desejado
+      - key: DJANGO_SUPERUSER_PASSWORD
+        generateValue: true # O Render pode gerar um valor seguro para você, ou defina um valor fixo
+      # Variável para logs não bufferizados
+      - key: PYTHONUNBUFFERED
+        value: "1"
+databases: # Configuração do banco de dados
+  - name: jecistore-database # Nome do seu banco de dados no Render
+    plan: free # Plano do banco de dados (pode ser 'standard' para mais recursos em produção)
