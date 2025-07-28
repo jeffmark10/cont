@@ -52,8 +52,7 @@
                     <th class="py-3 px-6 text-left">Produto</th>
                     <th class="py-3 px-6 text-center">Quantidade</th>
                     <th class="py-3 px-6 text-center">Preço na Compra</th>
-                    <th class="py-3 px-6 text-left">Código de Rastreamento</th>
-                    <th class="py-3 px-6 text-center">Status do Item</th> {# NOVO: Coluna para status do item #}
+                    <th class="py-3 px-6 text-left">Gerenciar Envio</th> {# Coluna combinada #}
                     <th class="py-3 px-6 text-center">Ações</th>
                 </tr>
             </thead>
@@ -79,28 +78,21 @@
                     <td class="py-3 px-6 text-center">{{ item.quantity }}</td>
                     <td class="py-3 px-6 text-center">R$ {{ item.price_at_purchase|floatformat:2 }}</td>
                     <td class="py-3 px-6 text-left">
-                        <form action="{% url 'store:seller_update_order_item_status' item.id %}" method="post" class="flex items-center gap-2">
+                        {# Formulário ÚNICO para Código de Rastreamento e Status do Item #}
+                        <form action="{% url 'store:seller_update_order_item_status' item.id %}" method="post" class="flex flex-col gap-2">
                             {% csrf_token %}
-                            <input type="text" name="tracking_code" value="{{ item.tracking_code|default:'' }}" placeholder="Código de Rastreamento" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-pink-500">
-                            {# Removido o botão "Salvar" daqui, pois o status e o rastreamento serão atualizados juntos #}
-                            {# <button type="submit" class="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-200 text-xs">Salvar</button> #}
-                        {# Adicionado input hidden para o status atual do item, para que o formulário seja completo #}
-                        <input type="hidden" name="status" value="{{ item.status }}">
-                        </form>
-                    </td>
-                    <td class="py-3 px-6 text-center">
-                        <form action="{% url 'store:seller_update_order_item_status' item.id %}" method="post">
-                            {% csrf_token %}
-                            {# Input hidden para o tracking_code, para que o formulário seja completo #}
-                            <input type="hidden" name="tracking_code" value="{{ item.tracking_code|default:'' }}">
-                            <select name="status" class="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-pink-500 mb-2">
-                                {% for status_value, status_label in order_item_statuses %} {# Usando order_item_statuses #}
-                                <option value="{{ status_value }}" {% if item.status == status_value %}selected{% endif %}> {# Compara com item.status #}
+                            <label for="tracking-code-{{ item.id }}" class="sr-only">Código de Rastreamento</label>
+                            <input type="text" id="tracking-code-{{ item.id }}" name="tracking_code" value="{{ item.tracking_code|default:'' }}" placeholder="Código de Rastreamento" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-pink-500">
+                            
+                            <label for="status-{{ item.id }}" class="sr-only">Status do Item</label>
+                            <select id="status-{{ item.id }}" name="status" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-pink-500">
+                                {% for status_value, status_label in order_item_statuses %}
+                                <option value="{{ status_value }}" {% if item.status == status_value %}selected{% endif %}>
                                     {{ status_label }}
                                 </option>
                                 {% endfor %}
                             </select>
-                            <button type="submit" class="bg-purple-500 text-white p-2 rounded-md hover:bg-purple-600 transition duration-200 text-xs">Atualizar Item</button> {# Texto do botão atualizado #}
+                            <button type="submit" class="bg-purple-500 text-white p-2 rounded-md hover:bg-purple-600 transition duration-200 text-xs mt-2">Atualizar Item</button>
                         </form>
                     </td>
                     <td class="py-3 px-6 text-center">

@@ -280,9 +280,8 @@ class Order(models.Model):
         status_updated = False
 
         # Obtém todos os status dos itens do pedido
-        all_item_statuses = [item.status for item in self.items.all()] # Assumindo que OrderItem terá um campo 'status'
-        # Se OrderItem não tiver um campo 'status', esta lógica precisará ser adaptada.
-        # Por enquanto, vamos considerar o status do pedido como o principal.
+        # Assumindo que OrderItem terá um campo 'status'
+        all_item_statuses = [item.status for item in self.items.all()]
 
         # Lógica de exemplo:
         # Se todos os itens estiverem 'shipped', o pedido pode ser 'shipped'.
@@ -300,6 +299,17 @@ class Order(models.Model):
                 new_order_status = 'processing'
             elif updated_item_status == 'cancelled' and current_order_status not in ['completed', 'cancelled']:
                 new_order_status = 'cancelled'
+            elif all(status == 'delivered' for status in all_item_statuses):
+                # Se todos os itens do pedido (pertencentes a qualquer vendedor) estiverem 'delivered',
+                # o status do pedido principal pode ser 'completed'.
+                new_order_status = 'completed'
+            elif any(status == 'shipped' for status in all_item_statuses) and new_order_status not in ['completed', 'cancelled']:
+                # Se pelo menos um item foi enviado, o pedido está 'shipped' (se não estiver concluído/cancelado)
+                new_order_status = 'shipped'
+            elif any(status == 'processing' for status in all_item_statuses) and new_order_status not in ['shipped', 'completed', 'cancelled']:
+                # Se pelo menos um item está processando, o pedido está 'processing'
+                new_order_status = 'processing'
+
 
         if new_order_status != current_order_status:
             self.status = new_order_status
@@ -360,59 +370,3 @@ class OrderItem(models.Model):
     def get_total_price(self):
         # Calcula o preço total para este item do pedido.
         return self.quantity * self.price_at_purchase
-
-
-    # store/models.py
-    from django.db import models
-    from django.utils.text import slugify
-    from django.contrib.auth.models import User
-    from cloudinary.models import CloudinaryField
-    from django.db import transaction
-
-    # ... (outras classes e código acima) ...
-
-    # NOVO MODELO: OrderItem (Item do Pedido)
-    # Representa um produto específico dentro de um pedido.
-    class OrderItem(models.Model):
-        # O pedido ao qual este item pertence.
-        order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items', verbose_name="Pedido")
-
-        # O produto que foi comprado.
-        product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, verbose_name="Produto")
-
-        # Quantidade do produto neste item do pedido.
-        quantity = models.PositiveIntegerField(verbose_name="Quantidade")
-
-        # Preço do produto no momento da compra (para evitar que o preço mude após o pedido).
-        price_at_purchase = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Preço na Compra")
-
-        # NOVO CAMPO: Código de rastreamento para este item específico do pedido.
-        tracking_code = models.CharField(
-            max_length=100,
-            blank=True,
-            null=True,
-            verbose_name="Código de Rastreamento do Envio"
-        )
-
-        # Adicionando um campo 'status' ao OrderItem para maior granularidade
-        ITEM_STATUS_CHOICES = [
-            ('pending', 'Pendente'),
-            ('processing', 'Processando'),
-            ('shipped', 'Enviado'),
-            ('delivered', 'Entregue'),
-            ('returned', 'Devolvido'),
-            ('cancelled', 'Cancelado'),
-        ]
-        status = models.CharField(max_length=20, choices=ITEM_STATUS_CHOICES, default='pending', verbose_name="Status do Item")
-
-
-        class Meta:
-            verbose_name = "Item do Pedido"
-            verbose_name_plural = "Itens do Pedido"
-
-        def __str__(self):
-            return f"{self.quantity} x {self.product.name if self.product else 'Produto Removido'} (Pedido #{self.order.id})"
-
-        def get_total_price(self):
-            return self.quantity * self.price_at_purchase
-    

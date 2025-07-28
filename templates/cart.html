@@ -39,7 +39,7 @@
                                 </td>
                                 <td class="py-3 px-6 text-center" aria-labelledby="product-name-{{ item.id }}">R$ <span class="product-price">{{ item.product.price|floatformat:2 }}</span></td>
                                 <td class="py-3 px-6 text-center">
-                                    <form class="update-cart-form" data-item-id="{{ item.id }}" action="{% url 'store:update_cart_item' item.id %}" method="POST" aria-label="Atualizar quantidade de {{ item.product.name }}">
+                                    <form class="update-cart-form" data-item-id="{{ item.id }}" action="{% url 'store:update_cart_item' item.id %}" method="POST" aria-label="Atualizar quantidade de {{ item.product.name }}" data-update-url="{% url 'store:update_cart_item' 0 %}">
                                         {% csrf_token %}
                                         <div class="flex items-center justify-center gap-2">
                                             <label for="quantity-{{ item.id }}" class="sr-only">Quantidade para {{ item.product.name }}</label>
@@ -51,7 +51,7 @@
                                 </td>
                                 <td class="py-3 px-6 text-center" aria-labelledby="product-name-{{ item.id }}">R$ <span class="item-total-price">{{ item.get_total_price|floatformat:2 }}</span></td>
                                 <td class="py-3 px-6 text-center">
-                                    <form class="remove-from-cart-form" data-item-id="{{ item.id }}" action="{% url 'store:remove_from_cart' item.id %}" method="POST" aria-label="Remover {{ item.product.name }} do carrinho">
+                                    <form class="remove-from-cart-form" data-item-id="{{ item.id }}" action="{% url 'store:remove_from_cart' item.id %}" method="POST" aria-label="Remover {{ item.product.name }} do carrinho" data-remove-url="{% url 'store:remove_from_cart' 0 %}">
                                         {% csrf_token %}
                                         <button type="submit" class="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition duration-200 text-xs" data-original-text="Remover" aria-label="Remover">
                                             Remover
@@ -94,23 +94,26 @@
         function displayMessage(message, type) {
             console.log(`Mensagem (${type}): ${message}`);
             // Fallback simples caso a função em base.html não esteja carregada
-            alert(message); 
+            // alert(message); // Removido alert
         }
 
         // Função para atualizar a UI do carrinho
         function updateCartUI(cartData) {
             const cartItemsBody = document.getElementById('cart-items-body');
             const cartTotalPriceElement = document.getElementById('cart-total-price');
-            const cartCountElement = document.querySelector('.cart-items-count');
+            const cartCountElement = document.getElementById('cart-item-count-badge'); // Usando o ID específico
             const emptyCartMessage = document.getElementById('empty-cart-message');
+            const cartTableContainer = document.querySelector('.overflow-x-auto');
+            const checkoutButtonContainer = document.querySelector('.flex.justify-center.mt-10');
+
 
             // Atualiza a contagem do carrinho no cabeçalho
             if (cartCountElement) {
                 cartCountElement.innerText = cartData.cart_count;
                 if (cartData.cart_count > 0) {
-                    cartCountElement.closest('.relative').querySelector('span').classList.remove('hidden');
+                    cartCountElement.classList.remove('hidden');
                 } else {
-                    cartCountElement.closest('.relative').querySelector('span').classList.add('hidden');
+                    cartCountElement.classList.add('hidden');
                 }
             }
 
@@ -120,8 +123,10 @@
             }
 
             // Remove todos os itens existentes na tabela
-            while (cartItemsBody && cartItemsBody.firstChild) {
-                cartItemsBody.removeChild(cartItemsBody.firstChild);
+            if (cartItemsBody) {
+                while (cartItemsBody.firstChild) {
+                    cartItemsBody.removeChild(cartItemsBody.firstChild);
+                }
             }
 
             // Adiciona os novos itens à tabela
@@ -129,16 +134,18 @@
                 if (emptyCartMessage) {
                     // Esconde a mensagem de carrinho vazio e exibe a tabela
                     emptyCartMessage.classList.add('hidden');
-                    const cartTableContainer = document.querySelector('.overflow-x-auto');
                     if (cartTableContainer) cartTableContainer.classList.remove('hidden');
-                    const checkoutButtonContainer = document.querySelector('.flex.justify-center.mt-10');
                     if (checkoutButtonContainer) checkoutButtonContainer.classList.remove('hidden');
                 }
                 cartData.cart_items.forEach(item => {
                     const row = document.createElement('tr');
                     row.className = 'border-b border-gray-200 hover:bg-gray-50';
                     row.id = `cart-item-${item.id}`;
-                    // Correção na URL: use item.id diretamente, não a substituição de '/0/'
+                    
+                    // Obtém as URLs base do Django para construir as URLs dinamicamente
+                    const updateUrlBase = document.querySelector('[data-update-url]').dataset.updateUrl;
+                    const removeUrlBase = document.querySelector('[data-remove-url]').dataset.removeUrl;
+
                     row.innerHTML = `
                         <td class="py-3 px-6 text-left whitespace-nowrap">
                             <div class="flex items-center">
@@ -150,7 +157,7 @@
                         </td>
                         <td class="py-3 px-6 text-center" aria-labelledby="product-name-${item.id}">R$ <span class="product-price">${item.price.toFixed(2).replace('.', ',')}</span></td>
                         <td class="py-3 px-6 text-center">
-                            <form class="update-cart-form" data-item-id="${item.id}" action="/store/carrinho/atualizar/${item.id}/" method="POST" aria-label="Atualizar quantidade de ${item.product_name}">
+                            <form class="update-cart-form" data-item-id="${item.id}" action="${updateUrlBase.replace('/0/', `/${item.id}/`)}" method="POST" aria-label="Atualizar quantidade de ${item.product_name}">
                                 {% csrf_token %}
                                 <div class="flex items-center justify-center gap-2">
                                     <label for="quantity-${item.id}" class="sr-only">Quantidade para ${item.product_name}</label>
@@ -162,7 +169,7 @@
                         </td>
                         <td class="py-3 px-6 text-center" aria-labelledby="product-name-${item.id}">R$ <span class="item-total-price">${item.total_item_price.toFixed(2).replace('.', ',')}</span></td>
                         <td class="py-3 px-6 text-center">
-                            <form class="remove-from-cart-form" data-item-id="${item.id}" action="/store/carrinho/remover/${item.id}/" method="POST" aria-label="Remover ${item.product_name} do carrinho">
+                            <form class="remove-from-cart-form" data-item-id="${item.id}" action="${removeUrlBase.replace('/0/', `/${item.id}/`)}" method="POST" aria-label="Remover ${item.product_name} do carrinho">
                                 {% csrf_token %}
                                 <button type="submit" class="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition duration-200 text-xs" data-original-text="Remover" aria-label="Remover">
                                     Remover
@@ -178,9 +185,7 @@
                 // Se não houver itens, mostra a mensagem de carrinho vazio
                 if (emptyCartMessage) {
                     emptyCartMessage.classList.remove('hidden');
-                    const cartTableContainer = document.querySelector('.overflow-x-auto');
                     if (cartTableContainer) cartTableContainer.classList.add('hidden');
-                    const checkoutButtonContainer = document.querySelector('.flex.justify-center.mt-10');
                     if (checkoutButtonContainer) checkoutButtonContainer.classList.add('hidden');
                 }
             }

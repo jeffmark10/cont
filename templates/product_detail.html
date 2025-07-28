@@ -43,7 +43,7 @@
                    target="_blank" 
                    class="flex-1 inline-flex items-center justify-center bg-green-500 text-white py-3 px-6 rounded-full text-lg font-semibold hover:bg-green-600 transition duration-300 shadow-lg transform hover:-translate-y-1">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor" class="w-5 h-5 mr-2">
-                        <path d="M380.9 97.1C339.4 55.6 283.9 32 224 32S108.6 55.6 67.1 97.1 32 183.9 32 243.9c0 42.4 13.9 82.1 39.1 113.8L32 480l116.9-31.6c30.7 17.7 65.4 27.9 101.1 27.9 59.9 0 115.4-23.6 156.9-65.1S416 303.9 416 243.9c0-59.9-23.6-115.4-65.1-156.9zM224 416c-35.1 0-69.1-10.2-98.1-29.6l-7.1-4.2L70.5 401l18.4-69.2-4.5-7.2c-20.2-32.3-31.7-69.1-31.7-108.1 0-48.4 19-93.7 53-127.7S175.6 80 224 80s93.7 19 127.7 53 53 79.3 53 127.7-19 93.7-53 127.7-79.3 53-127.7 53zM309.2 272.2c-1.6-1.6-4.2-2.5-6.7-2.5-2.5 0-5.1.9-6.7 2.5l-32.1 32.1c-1.6 1.6-4.2 2.5-6.7 2.5-2.5 0-5.1-.9-6.7-2.5l-19.2-19.2c-1.6-1.6-2.5-4.2-2.5-6.7s.9-5.1 2.5-6.7l32.1-32.1c1.6-1.6 2.5-4.2 2.5-6.7s-.9-5.1-2.5-6.7l-19.2-19.2c-1.6-1.6-4.2-2.5-6.7-2.5-2.5 0-5.1.9-6.7 2.5l-32.1 32.1c-1.6 1.6-2.5 4.2-2.5 6.7s.9 5.1 2.5 6.7l19.2 19.2c1.6 1.6 2.5 4.2 2.5 6.7s-.9 5.1-2.5 6.7l-32.1 32.1c-1.6 1.6-4.2 2.5-6.7 2.5-2.5 0-5.1-.9-6.7-2.5l-19.2-19.2c-1.6-1.6-2.5-4.2-2.5-6.7s.9-5.1 2.5-6.7z"/>
+                        <path d="M380.9 97.1C339.4 55.6 283.9 32 224 32S108.6 55.6 67.1 97.1 32 183.9 32 243.9c0 42.4 13.9 82.1 39.1 113.8L32 480l116.9-31.6c30.7 17.7 65.4 27.9 101.1 27.9 59.9 0 115.4-23.6 156.9-65.1S416 303.9 416 243.9c0-59.9-23.6-115.4-65.1-156.9zM224 416c-35.1 0-69.1-10.2-98.1-29.6l-7.1-4.2L70.5 401l18.4-69.2-4.5-7.2c-20.2-32.3-31.7-69.1-31.7-108.1 0-48.4 19-93.7 53-127.7S175.6 80 224 80s93.7 19 127.7 53 53 79.3 53 127.7-19 93.7-53 127.7-79.3 53-127.7 53zM309.2 272.2c-1.6-1.6-4.2-2.5-6.7-2.5-2.5 0-5.1.9-6.7 2.5l-32.1 32.1c-1.6 1.6-4.2 2.5-6.7 2.5-2.5 0-5.1-.9-6.7-2.5l-19.2-19.2c-1.6-1.6-2.5-4.2-2.5-6.7s.9-5.1 2.5-6.7l32.1-32.1c1.6-1.6 2.5-4.2 2.5-6.7s-.9-5.1-2.5-6.7l-19.2-19.2c-1.6-1.6-4.2-2.5-6.7-2.5-2.5 0-5.1.9-6.7 2.5l-32.1 32.1c-1.6 1.6-4.2 2.5-6.7 2.5-2.5 0-5.1-.9-6.7-2.5l-19.2-19.2c-1.6-1.6-2.5-4.2-2.5-6.7s.9-5.1 2.5-6.7z"/>
                     </svg>
                     Fale Conosco
                 </a>
@@ -80,7 +80,7 @@
                 if (data.success) {
                     // Inicia a animação "fly-to-cart"
                     const productImage = document.querySelector('.product-image-detail');
-                    const cartIcon = document.querySelector('.cart-items-count'); // O span do contador
+                    const cartIcon = document.getElementById('cart-item-count-badge'); // Usando o ID específico
                     
                     if (productImage && cartIcon) {
                         const imgClone = productImage.cloneNode(true);
@@ -116,9 +116,9 @@
                         cartCountElement.innerText = data.cart_count;
                         // Mostra o span se a contagem for maior que 0
                         if (data.cart_count > 0) {
-                            cartCountElement.closest('.relative').querySelector('span').classList.remove('hidden');
+                            cartCountElement.classList.remove('hidden');
                         } else {
-                            cartCountElement.closest('.relative').querySelector('span').classList.add('hidden');
+                            cartCountElement.classList.add('hidden');
                         }
                     }
                     displayMessage(data.message, 'success');
@@ -142,12 +142,12 @@
         function displayMessage(message, type) {
             console.log(`Mensagem (${type}): ${message}`);
             // Fallback simples caso a função em base.html não esteja carregada
-            alert(message); 
+            // alert(message); // Removido alert
         }
 
         // Garante que o elemento do contador do carrinho exista ou seja criado
         document.addEventListener('DOMContentLoaded', () => {
-            let cartCountElement = document.querySelector('.cart-items-count');
+            let cartCountElement = document.getElementById('cart-item-count-badge');
             if (!cartCountElement) {
                 const cartIcon = document.querySelector('a[href*="view_cart"]');
                 if (cartIcon) {
